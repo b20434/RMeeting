@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>住院醫師座談會後續回饋</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #F2F0EB;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .animate-fade-in-up {
+            animation: fadeInUp 0.5s ease-out forwards;
+        }
+    </style>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#7B8D8E',
+                        secondary: '#5E6160',
+                        accent: '#EAE8E3',
+                        background: '#F2F0EB',
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-[#F2F0EB]">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        // --- Lucide Icons Replacement (Inline SVG Components) ---
+        const UserCheck = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>
+        );
+        const Lightbulb = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-1 1.5-2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
+        );
+        const ShieldCheck = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+        );
+        const MessageSquare = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        );
+        const Send = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        );
+        const Loader2 = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+        );
+
+        const SectionCard = ({ title, icon, description, children }) => (
+            <div className="bg-white rounded-xl shadow-sm p-6 md:p-8 border border-[#EAE8E3]">
+                <div className="flex items-center gap-3 mb-2 border-b border-[#F2F0EB] pb-4">
+                    <div className="p-2 bg-[#F2F0EB] rounded-lg">
+                        {icon}
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-bold text-[#5E6160]">{title}</h2>
+                    </div>
+                </div>
+                {description && (
+                    <p className="text-sm text-[#888B8A] mb-6 pl-1">{description}</p>
+                )}
+                <div className="space-y-8">
+                    {children}
+                </div>
+            </div>
+        );
+
+        const LikertQuestion = ({ id, question, value, onChange, required }) => {
+            return (
+                <div className="animate-fade-in-up">
+                    <h3 className="text-base md:text-lg font-medium text-[#5E6160] mb-4 leading-relaxed">
+                        {question}
+                        {required && <span className="text-red-500 ml-1 font-bold">*</span>}
+                    </h3>
+                    <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-[#FAFAF9] p-4 rounded-xl border border-[#F2F0EB]">
+                        <div className="w-full flex justify-between items-center px-2">
+                            <span className="text-xs text-[#9CA3AF] font-medium hidden sm:block">非常不同意</span>
+                            <div className="flex gap-3 md:gap-6 w-full justify-center">
+                                {[1, 2, 3, 4, 5].map((score) => (
+                                    <button
+                                        key={score}
+                                        type="button"
+                                        onClick={() => onChange(id, score)}
+                                        className={`
+                                            w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center text-lg font-medium transition-all duration-300
+                                            ${value === score 
+                                                ? 'bg-[#7B8D8E] text-white shadow-md scale-110 ring-2 ring-[#7B8D8E] ring-offset-2' 
+                                                : 'bg-white text-[#888B8A] border border-[#DCD9D1] hover:bg-[#EAE8E3] hover:text-[#5E6160]'}
+                                        `}
+                                    >
+                                        {score}
+                                    </button>
+                                ))}
+                            </div>
+                            <span className="text-xs text-[#9CA3AF] font-medium hidden sm:block">非常同意</span>
+                        </div>
+                        
+                        {/* Mobile Labels */}
+                        <div className="flex justify-between w-full sm:hidden text-xs text-[#9CA3AF] px-1">
+                            <span>1 (不同意)</span>
+                            <span>5 (同意)</span>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const OpenEndedQuestion = ({ id, question, value, onChange, placeholder, required }) => (
+            <div className="space-y-3">
+                <label htmlFor={id} className="block text-base md:text-lg font-medium text-[#5E6160] leading-relaxed">
+                    {question}
+                    {required && <span className="text-red-500 ml-1 font-bold">*</span>}
+                </label>
+                <textarea
+                    id={id}
+                    value={value}
+                    onChange={(e) => onChange(id, e.target.value)}
+                    placeholder={placeholder}
+                    className="w-full min-h-[120px] p-4 rounded-xl bg-[#FAFAF9] border border-[#DCD9D1] focus:border-[#7B8D8E] focus:ring-1 focus:ring-[#7B8D8E] outline-none transition-colors text-[#5E6160] placeholder-[#B0B3B2] resize-y"
+                />
+            </div>
+        );
+
+        const PostEventSurvey = () => {
+            // ==========================================
+            // 【重要】請在此處填入您的 Google Apps Script 網頁應用程式網址
+            // 格式範例：'https://script.google.com/macros/s/xxxxxxxxx/exec'
+            const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyRs-m0XamgI3JNHlg8YkFynx0ZFdDy2YGSybpsERjK1tahXYLmk17rubAMkObnSNaB/exec'; 
+            // ==========================================
+
+            const [formData, setFormData] = useState({
+                section1_q1: null,
+                section1_q2: null,
+                section2_q1: null,
+                section2_q2: null,
+                section2_q3: null,
+                section3_q1: null,
+                section3_q2: null,
+                section3_q3: null,
+                feedback_q1: '',
+                feedback_q2: ''
+            });
+
+            const [submitStatus, setSubmitStatus] = useState('idle'); // idle, submitting, success, error
+            const [errorMessage, setErrorMessage] = useState('');
+
+            const handleRatingChange = (id, value) => {
+                setFormData(prev => ({ ...prev, [id]: value }));
+                // Clear error when user interacts
+                if (submitStatus === 'error') {
+                     setSubmitStatus('idle');
+                     setErrorMessage('');
+                }
+            };
+
+            const handleTextChange = (id, value) => {
+                setFormData(prev => ({ ...prev, [id]: value }));
+                // 當使用者輸入文字時清除錯誤狀態
+                if (submitStatus === 'error') {
+                     setSubmitStatus('idle');
+                     setErrorMessage('');
+                }
+            };
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setSubmitStatus('submitting');
+                setErrorMessage('');
+
+                // 檢查是否已設定 URL
+                if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes('請將您的')) {
+                    setSubmitStatus('error');
+                    setErrorMessage('程式錯誤：尚未設定後端 Google Script 網址。');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    return;
+                }
+
+                // --- 1. 必填驗證邏輯 ---
+                const requiredFields = [
+                    'section1_q1', 'section1_q2',
+                    'section2_q1', 'section2_q2', 'section2_q3',
+                    'section3_q1', 'section3_q2', 'section3_q3',
+                    'feedback_q1', 'feedback_q2' // 新增開放式回饋為必填
+                ];
+                
+                // 檢查是否有未填寫的欄位 (null 或 空字串)
+                const missingFields = requiredFields.filter(field => {
+                    const value = formData[field];
+                    return value === null || (typeof value === 'string' && value.trim() === '');
+                });
+
+                if (missingFields.length > 0) {
+                    setSubmitStatus('error');
+                    setErrorMessage(`尚有 ${missingFields.length} 個必填項目未完成，請填寫標示為必填(*)的欄位。`);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    return;
+                }
+
+                try {
+                    // --- 真實資料傳送 (Google Apps Script) ---
+                    // 使用 no-cors 模式解決跨域問題
+                    // 注意：no-cors 模式下無法讀取 response 內容，只能發送
+                    await fetch(GOOGLE_SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'no-cors', // 關鍵：允許跨域發送
+                        headers: {
+                            'Content-Type': 'text/plain;charset=utf-8', // 避免觸發 OPTIONS 預檢請求
+                        },
+                        body: JSON.stringify(formData)
+                    });
+                   
+                    // 假設發送成功 (因為 no-cors 捕捉不到 4xx/5xx 錯誤，除非網路斷線)
+                    setSubmitStatus('success');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    setSubmitStatus('error');
+                    setErrorMessage('送出失敗，請檢查網路連線或稍後再試。');
+                }
+            };
+
+            if (submitStatus === 'success') {
+                return (
+                    <div className="min-h-screen flex items-center justify-center p-4">
+                        <div className="bg-white rounded-2xl p-8 md:p-12 shadow-xl text-center max-w-lg w-full border border-[#EAE8E3] animate-fade-in-up">
+                            <div className="w-20 h-20 bg-[#F2F0EB] rounded-full flex items-center justify-center mx-auto mb-6">
+                                <Send className="w-10 h-10 text-[#7B8D8E]" />
+                            </div>
+                            <h2 className="text-2xl font-bold text-[#5E6160] mb-4">感謝您的回饋</h2>
+                            <p className="text-[#888B8A] leading-relaxed">
+                                您的意見已成功送出。<br/>
+                                我們會將這些建議轉化為具體的改善行動。
+                            </p>
+                            <button 
+                                onClick={() => window.location.reload()}
+                                className="mt-8 text-[#7B8D8E] font-medium hover:text-[#5E6160] transition-colors"
+                            >
+                                返回問卷
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="min-h-screen py-8 md:py-12 px-4 sm:px-6 lg:px-8">
+                    <div className="max-w-3xl mx-auto">
+                        
+                        {/* Header */}
+                        <div className="text-center mb-12 space-y-4">
+                            <h1 className="text-2xl md:text-3xl font-bold text-[#5E6160] tracking-tight">
+                                115 年度住院醫師座談會
+                                <span className="block text-3xl md:text-4xl text-[#7B8D8E] mt-2">後測問卷</span>
+                            </h1>
+                            <p className="text-[#888B8A] max-w-xl mx-auto">
+                                我們希望將座談會中的討論轉化為實際的改善動力。您的回饋將協助我們持續優化教學環境。
+                            </p>
+                        </div>
+
+                        {/* Error Alert */}
+                        {submitStatus === 'error' && (
+                            <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl text-red-600 flex items-center justify-center gap-2 animate-pulse">
+                                <span className="font-bold">⚠️</span> {errorMessage}
+                            </div>
+                        )}
+
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            
+                            {/* Section 1: 整體座談感受 */}
+                            <SectionCard 
+                                title="一、整體座談感受" 
+                                icon={<UserCheck className="w-6 h-6 text-[#9AA598]" />}
+                                description="請評估本次座談的氛圍與聚焦程度"
+                            >
+                                <LikertQuestion 
+                                    id="section1_q1" 
+                                    question="1. 本次座談會確實聚焦於住院醫師在臨床與教學現場的真實問題。"
+                                    value={formData.section1_q1}
+                                    onChange={handleRatingChange}
+                                    required={true}
+                                />
+                                <LikertQuestion 
+                                    id="section1_q2" 
+                                    question="2. 我感受到院方或教學主管有理解並重視住院醫師的學習處境。"
+                                    value={formData.section1_q2}
+                                    onChange={handleRatingChange}
+                                    required={true}
+                                />
+                            </SectionCard>
+
+                            {/* Section 2: 問題轉化為改善方案的成效 */}
+                            <SectionCard 
+                                title="二、問題轉化為改善方案的成效" 
+                                icon={<Lightbulb className="w-6 h-6 text-[#C7B6B1]" />}
+                                description="針對會議中提出的系統優化、流程調整或支援機制"
+                            >
+                                <LikertQuestion 
+                                    id="section2_q1" 
+                                    question="3. 本次會議中提出的改善方案，內容清楚且容易理解。"
+                                    value={formData.section2_q1}
+                                    onChange={handleRatingChange}
+                                    required={true}
+                                />
+                                <LikertQuestion 
+                                    id="section2_q2" 
+                                    question="4. 我認為這些改善方案，未來有機會實際提升我的臨床學習或教學效率。"
+                                    value={formData.section2_q2}
+                                    onChange={handleRatingChange}
+                                    required={true}
+                                />
+                                <LikertQuestion 
+                                    id="section2_q3" 
+                                    question="5. 相較於會議前，我對院內教學與流程改善的可行性更有信心。"
+                                    value={formData.section2_q3}
+                                    onChange={handleRatingChange}
+                                    required={true}
+                                />
+                            </SectionCard>
+
+                            {/* Section 3: 信任感與未來參與意願 */}
+                            <SectionCard 
+                                title="三、信任感與未來參與意願" 
+                                icon={<ShieldCheck className="w-6 h-6 text-[#8FA3A8]" />}
+                                description="對於組織文化與持續改善的看法"
+                            >
+                                <LikertQuestion 
+                                    id="section3_q1" 
+                                    question="6. 本次座談提升我對教學體系或院方決策的信任感。"
+                                    value={formData.section3_q1}
+                                    onChange={handleRatingChange}
+                                    required={true}
+                                />
+                                <LikertQuestion 
+                                    id="section3_q2" 
+                                    question="7. 若未來有相關教學或制度改善的討論或試行，我願意持續參與。"
+                                    value={formData.section3_q2}
+                                    onChange={handleRatingChange}
+                                    required={true}
+                                />
+                                <LikertQuestion 
+                                    id="section3_q3" 
+                                    question="8. 我認為此類住院醫師座談，對教學品質改善具有實質價值，值得持續辦理。"
+                                    value={formData.section3_q3}
+                                    onChange={handleRatingChange}
+                                    required={true}
+                                />
+                            </SectionCard>
+
+                            {/* Section 4: 開放式回饋 */}
+                            <SectionCard 
+                                title="四、開放式回饋" 
+                                icon={<MessageSquare className="w-6 h-6 text-[#A69C8E]" />}
+                                description="您的具體建議是我們進步的關鍵"
+                            >
+                                <OpenEndedQuestion 
+                                    id="feedback_q1"
+                                    question="9. 本次座談中，哪一項討論或建議，最有助於實際改善住院醫師的學習流程或教學品質？請說明其原因或可能的影響。"
+                                    value={formData.feedback_q1}
+                                    onChange={handleTextChange}
+                                    placeholder="請簡述您的看法..."
+                                    required={true}
+                                />
+                                <OpenEndedQuestion 
+                                    id="feedback_q2"
+                                    question="10. 在院方高度重視住院醫師學習需求的前提下，您認為最優先投入改善資源的教學或臨床流程，應具備哪些關鍵特徵？請簡要說明。"
+                                    value={formData.feedback_q2}
+                                    onChange={handleTextChange}
+                                    placeholder="例如：排班制度、臨床教學時間不足..."
+                                    required={true}
+                                />
+                            </SectionCard>
+
+                            {/* Submit Button */}
+                            <div className="pt-6">
+                                <button
+                                    type="submit"
+                                    disabled={submitStatus === 'submitting'}
+                                    className="w-full bg-[#7B8D8E] text-white py-4 px-6 rounded-xl font-bold text-lg hover:bg-[#5E6160] active:scale-[0.99] transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                >
+                                    {submitStatus === 'submitting' ? (
+                                        <>
+                                            <Loader2 className="animate-spin" />
+                                            處理中...
+                                        </>
+                                    ) : (
+                                        <>
+                                            確認送出回饋
+                                            <Send className="w-5 h-5" />
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <footer className="mt-12 text-center text-[#B0B3B2] text-sm space-y-3 pb-8">
+                            <div className="font-bold text-[#5E6160] text-base">
+                                教學部 住院醫師組
+                            </div>
+                        </footer>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<PostEventSurvey />);
+    </script>
+</body>
+</html>
