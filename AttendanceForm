@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>115年度 住院醫師座談餐會｜報名表</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        morandi: {
+                            bg: '#F5F5F3',       // 淺米灰背景
+                            card: '#FFFFFF',     // 純白卡片
+                            primary: '#7A8B99',  // 莫蘭迪藍灰 (主色 - 專業/信任)
+                            secondary: '#A6B1A1',// 莫蘭迪綠 (輔色 - 成長/舒適)
+                            accent: '#C5B4A1',   // 莫蘭迪暖棕 (強調 - 溫度)
+                            text: '#4A4F55',     // 深灰文字
+                            lightText: '#8C9299',// 淺灰文字
+                            border: '#E0E0E0',   // 邊框
+                            inputBg: '#F9F9F9'   // 輸入框背景
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Noto Sans TC', 'Microsoft JhengHei', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #F5F5F3;
+            color: #4A4F55;
+        }
+        
+        /* 自定義滾動條 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #F5F5F3; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #D1D5DB; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #9CA3AF; 
+        }
+
+        .input-focus-ring:focus-within {
+            box-shadow: 0 0 0 2px rgba(122, 139, 153, 0.3);
+            border-color: #7A8B99;
+        }
+
+        /* Loading Spinner */
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 3px solid #7A8B99;
+            width: 20px;
+            height: 20px;
+            -webkit-animation: spin 1s linear infinite;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen py-8 px-4 sm:px-6 lg:px-8 selection:bg-morandi-primary selection:text-white">
+
+    <!-- Main Container -->
+    <div class="max-w-3xl mx-auto bg-morandi-card rounded-2xl shadow-xl overflow-hidden border border-morandi-border/50">
+        
+        <!-- Header Image / Banner Area -->
+        <div class="bg-gradient-to-r from-[#8E9EAB] to-[#ADC2B4] h-32 sm:h-40 relative flex items-center justify-center">
+            <div class="absolute inset-0 bg-black/10"></div>
+            <div class="relative z-10 text-center text-white px-4">
+                <h1 class="text-2xl sm:text-3xl font-bold tracking-wide">115年度 住院醫師座談餐會</h1>
+                <p class="mt-2 text-white/90 font-light tracking-wider">午餐交流｜聽見您的聲音</p>
+            </div>
+        </div>
+
+        <!-- Introduction Section -->
+        <div class="p-8 sm:p-10 border-b border-morandi-border">
+            <div class="prose prose-slate max-w-none text-morandi-text">
+                <p class="mb-4 leading-relaxed">
+                    <span class="font-medium text-morandi-primary">各位麻醉部、家庭醫學部、放射腫瘤部與耳鼻喉部的夥伴們，大家好：</span>
+                </p>
+                <p class="mb-6 text-sm sm:text-base leading-relaxed text-justify">
+                    平時忙於臨床與學習，辛苦了！為了更貼近大家的訓練需求，並持續優化教學與工作環境，教學部特別舉辦本次「住院醫師座談餐會」。這是一場輕鬆的午餐約會，我們邀請了副院長與各級主管列席，希望能直接聽聽大家在臨床現場的真實想法，與我們共同建立更好的學習生態。
+                </p>
+                
+                <div class="bg-[#F0F4F5] border-l-4 border-morandi-primary p-4 rounded-r-lg my-6">
+                    <div class="flex items-start">
+                        <i class="fas fa-lightbulb text-morandi-primary mt-1 mr-3"></i>
+                        <p class="text-sm text-gray-600">
+                            您的聲音是進步的起點，歡迎針對教學或臨床流程提出建議。試著從<strong>「問題」</strong>連結到<strong>「解方」</strong>，讓我們透過意見回饋帶動實質的正向改變。
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Event Info Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
+                    <div class="flex items-center space-x-3 text-sm">
+                        <div class="w-8 h-8 rounded-full bg-morandi-secondary/20 flex items-center justify-center text-morandi-secondary">
+                            <i class="far fa-calendar-alt"></i>
+                        </div>
+                        <div>
+                            <span class="block text-xs text-gray-400">時間</span>
+                            <span class="font-medium">115年 01月 27日 (二) 12:00</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3 text-sm">
+                        <div class="w-8 h-8 rounded-full bg-morandi-secondary/20 flex items-center justify-center text-morandi-secondary">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <div>
+                            <span class="block text-xs text-gray-400">地點</span>
+                            <span class="font-medium">563 會議室</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3 text-sm">
+                        <div class="w-8 h-8 rounded-full bg-morandi-accent/20 flex items-center justify-center text-morandi-accent">
+                            <i class="fas fa-hourglass-half"></i>
+                        </div>
+                        <div>
+                            <span class="block text-xs text-gray-400">截止日期</span>
+                            <span class="font-medium text-red-400">請於 1/25 (日) 前完成回覆</span>
+                        </div>
+                    </div>
+                     <div class="flex items-center space-x-3 text-sm cursor-pointer hover:opacity-80 transition-opacity" onclick="addToCalendar()">
+                        <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-500">
+                            <i class="fab fa-google"></i>
+                        </div>
+                        <div>
+                            <span class="block text-xs text-gray-400">提醒</span>
+                            <span class="font-medium text-blue-600 underline decoration-1 underline-offset-2">儲存至 Google 日曆</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Section -->
+        <form class="p-8 sm:p-10 space-y-10" id="registrationForm" onsubmit="handleSubmit(event)">
+            
+            <!-- Part 1: Basic Info -->
+            <section>
+                <div class="flex items-center mb-6">
+                    <span class="flex items-center justify-center w-8 h-8 rounded-full bg-morandi-primary text-white text-sm font-bold mr-3">1</span>
+                    <h2 class="text-xl font-medium text-gray-700">基本資料</h2>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pl-0 md:pl-11">
+                    <div class="group">
+                        <label for="name" class="block text-sm font-medium text-gray-600 mb-2 group-hover:text-morandi-primary transition-colors">您的姓名 <span class="text-red-400">*</span></label>
+                        <input type="text" id="name" name="name" required
+                            class="w-full px-4 py-3 bg-morandi-inputBg border border-gray-200 rounded-lg focus:outline-none focus:border-morandi-primary focus:ring-1 focus:ring-morandi-primary transition-all placeholder-gray-300"
+                            placeholder="請輸入全名">
+                    </div>
+
+                    <div class="group">
+                        <label for="department" class="block text-sm font-medium text-gray-600 mb-2 group-hover:text-morandi-primary transition-colors">您的科別 <span class="text-red-400">*</span></label>
+                        <div class="relative">
+                            <select id="department" name="department" required
+                                class="w-full px-4 py-3 bg-morandi-inputBg border border-gray-200 rounded-lg appearance-none focus:outline-none focus:border-morandi-primary focus:ring-1 focus:ring-morandi-primary transition-all cursor-pointer">
+                                <option value="" disabled selected>請選擇您所屬的部門</option>
+                                <option value="麻醉部">麻醉部</option>
+                                <option value="家庭醫學部">家庭醫學部</option>
+                                <option value="放射腫瘤部">放射腫瘤部</option>
+                                <option value="耳鼻喉部">耳鼻喉部</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+                                <i class="fas fa-chevron-down text-xs"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <hr class="border-morandi-border/60">
+
+            <!-- Part 2: Attendance & Diet -->
+            <section>
+                <div class="flex items-center mb-6">
+                    <span class="flex items-center justify-center w-8 h-8 rounded-full bg-morandi-secondary text-white text-sm font-bold mr-3">2</span>
+                    <h2 class="text-xl font-medium text-gray-700">出席與用餐</h2>
+                </div>
+
+                <div class="space-y-6 pl-0 md:pl-11">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-3">請問您是否出席 1/27 座談餐會？ <span class="text-red-400">*</span></label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <label class="relative flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors input-focus-ring">
+                                <input type="radio" name="attendance" value="yes" class="h-4 w-4 text-morandi-primary border-gray-300 focus:ring-morandi-primary" required onclick="toggleSections(true)">
+                                <span class="ml-3 text-gray-700">🙆‍♂️ 是，我會準時出席</span>
+                            </label>
+                            <label class="relative flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors input-focus-ring">
+                                <input type="radio" name="attendance" value="no" class="h-4 w-4 text-morandi-primary border-gray-300 focus:ring-morandi-primary" onclick="toggleSections(false)">
+                                <span class="ml-3 text-gray-700">🙅‍♀️ 否，已有行程 (不克出席)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="dietSection" class="transition-all duration-500 ease-in-out opacity-100 max-h-96 overflow-hidden">
+                        <label class="block text-sm font-medium text-gray-600 mb-3">您的飲食習慣 <span class="text-red-400">*</span></label>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="diet" value="normal" class="peer sr-only">
+                                <div class="rounded-lg border border-gray-200 p-3 text-center hover:bg-gray-50 peer-checked:border-morandi-secondary peer-checked:bg-morandi-secondary/10 peer-checked:text-morandi-secondary transition-all">
+                                    <span class="text-sm">葷食</span>
+                                    <div class="text-xs text-gray-400 mt-1">無忌口</div>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="diet" value="vegetarian" class="peer sr-only">
+                                <div class="rounded-lg border border-gray-200 p-3 text-center hover:bg-gray-50 peer-checked:border-morandi-secondary peer-checked:bg-morandi-secondary/10 peer-checked:text-morandi-secondary transition-all">
+                                    <span class="text-sm">素食</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="diet" value="no_beef" class="peer sr-only">
+                                <div class="rounded-lg border border-gray-200 p-3 text-center hover:bg-gray-50 peer-checked:border-morandi-secondary peer-checked:bg-morandi-secondary/10 peer-checked:text-morandi-secondary transition-all">
+                                    <span class="text-sm">不吃牛</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="diet" value="no_pork" class="peer sr-only">
+                                <div class="rounded-lg border border-gray-200 p-3 text-center hover:bg-gray-50 peer-checked:border-morandi-secondary peer-checked:bg-morandi-secondary/10 peer-checked:text-morandi-secondary transition-all">
+                                    <span class="text-sm">不吃豬</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Part 3: Feedback -->
+            <div id="feedbackContainer" class="transition-all duration-500 ease-in-out opacity-100 max-h-[1000px] overflow-hidden">
+                <hr class="border-morandi-border/60 mb-10">
+                
+                <section class="bg-morandi-bg/50 rounded-xl p-6 -mx-2 md:mx-0">
+                    <div class="flex items-center mb-4">
+                        <span class="flex items-center justify-center w-8 h-8 rounded-full bg-morandi-accent text-white text-sm font-bold mr-3">3</span>
+                        <div>
+                            <h2 class="text-xl font-medium text-gray-700">持續優化建議 <span class="text-sm font-normal text-gray-500 ml-2">(Feedback Loop)</span></h2>
+                        </div>
+                    </div>
+                    
+                    <p class="text-sm text-gray-500 mb-6 pl-0 md:pl-11 leading-relaxed">
+                        您的建議是我們建立優質訓練環境的關鍵。若有具體希望現場討論的議題，歡迎提前填寫。
+                    </p>
+
+                    <div class="grid grid-cols-1 gap-6 pl-0 md:pl-11">
+                        <!-- Problem -->
+                        <div class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm relative group focus-within:ring-1 focus-within:ring-morandi-accent/50 transition-all">
+                            <div class="absolute top-0 left-0 w-1 h-full bg-red-300 rounded-l-lg group-hover:bg-red-400 transition-colors"></div>
+                            <label for="problem" class="block text-sm font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-search mr-2 text-red-300"></i>
+                                您觀察到的現狀或困難 (Problem)
+                            </label>
+                            <p class="text-xs text-gray-400 mb-3">例如：臨床交班繁瑣、硬體設備老舊、教學時間衝突...</p>
+                            <textarea id="problem" name="problem" rows="3" 
+                                class="w-full p-3 bg-gray-50 border border-gray-100 rounded-md focus:outline-none focus:bg-white focus:border-morandi-accent transition-all resize-none text-sm text-gray-600"
+                                placeholder="請在此描述具體問題..."></textarea>
+                        </div>
+
+                        <!-- Arrow Indicator -->
+                        <div class="flex justify-center -my-3 z-10">
+                            <div class="bg-morandi-bg text-gray-400 rounded-full p-1 border border-gray-200">
+                                <i class="fas fa-arrow-down"></i>
+                            </div>
+                        </div>
+
+                        <!-- Solution -->
+                        <div class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm relative group focus-within:ring-1 focus-within:ring-morandi-secondary/50 transition-all">
+                            <div class="absolute top-0 left-0 w-1 h-full bg-green-300 rounded-l-lg group-hover:bg-green-400 transition-colors"></div>
+                            <label for="solution" class="block text-sm font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-rocket mr-2 text-green-300"></i>
+                                您的建議改善方案 (Solution)
+                            </label>
+                            <p class="text-xs text-gray-400 mb-3">例如：建立數位化查檢表、調整特定會議時間...</p>
+                            <textarea id="solution" name="solution" rows="3"
+                                class="w-full p-3 bg-gray-50 border border-gray-100 rounded-md focus:outline-none focus:bg-white focus:border-morandi-secondary transition-all resize-none text-sm text-gray-600"
+                                placeholder="請分享您的初步構想..."></textarea>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Footer / Submit Area -->
+            <div class="pt-4 flex flex-col sm:flex-row items-center justify-center sm:justify-end gap-4">
+                 <button type="button" onclick="showPreviewModal()"
+                    class="w-full sm:w-auto px-8 py-4 bg-white border border-morandi-primary/50 text-morandi-primary hover:bg-gray-50 font-medium rounded-lg transition-all duration-200 flex items-center justify-center">
+                    <i class="far fa-eye mr-2"></i>
+                    檢視填寫內容
+                </button>
+
+                <button type="submit" id="submitBtn"
+                    class="w-full sm:w-auto px-10 py-4 bg-morandi-primary hover:bg-[#6A7B89] text-white font-medium rounded-lg shadow-lg shadow-morandi-primary/30 transform hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center">
+                    <span id="btnText">送出報名表</span>
+                    <i id="btnIcon" class="fas fa-paper-plane ml-2 text-sm"></i>
+                    <div id="btnLoader" class="loader hidden ml-2"></div>
+                </button>
+            </div>
+
+        </form>
+
+        <!-- Footer Info -->
+        <div class="bg-gray-50 border-t border-gray-200 p-6 text-center text-sm text-gray-500">
+            <p class="font-medium text-gray-600 mb-1">主辦單位：教學部 住院醫師組</p>
+            <p>聯絡人：林淑雅 (分機 57438；信箱 cmh90022@mail.chimei.org.tw)</p>
+        </div>
+    </div>
+
+    <!-- Preview Modal -->
+    <div id="previewModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center backdrop-blur-sm opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-xl w-full max-w-lg mx-4 shadow-2xl transform scale-95 transition-transform duration-300 max-h-[90vh] flex flex-col">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-morandi-bg rounded-t-xl">
+                <h3 class="text-lg font-bold text-gray-800"><i class="far fa-list-alt mr-2 text-morandi-primary"></i>確認報名資料</h3>
+                <button onclick="closePreviewModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto text-sm text-gray-600 space-y-4" id="previewContent">
+            </div>
+            <div class="p-4 border-t border-gray-100 flex justify-end gap-3 rounded-b-xl bg-gray-50">
+                <button onclick="closePreviewModal()" class="px-4 py-2 text-gray-500 hover:bg-gray-200 rounded-lg transition-colors">返回修改</button>
+                <button onclick="confirmSubmitFromPreview()" class="px-4 py-2 bg-morandi-primary text-white rounded-lg hover:bg-opacity-90 transition-colors">確認送出</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center backdrop-blur-sm opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-2xl p-8 max-w-sm mx-4 shadow-2xl transform scale-95 transition-transform duration-300">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-green-500 animate-bounce">
+                    <i class="fas fa-check text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">報名成功！</h3>
+                <p class="text-gray-500 mb-6">感謝您的回覆，資料已傳送至教學部。</p>
+                <button onclick="closeSuccessModal()" class="w-full py-2.5 bg-morandi-primary text-white rounded-lg hover:bg-opacity-90 transition-colors">
+                    關閉
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // *** 重要：請填入您部署 Apps Script 獲得的 URL ***
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxkl4fmKXvbmCRQhBTACZMkHxvftqeU1rKKChI6uomivRb4o0Zh2sw6JYnIni_J-Wtl/exec'; 
+
+        function toggleSections(isAttending) {
+            const dietSection = document.getElementById('dietSection');
+            const feedbackContainer = document.getElementById('feedbackContainer');
+            const dietInputs = document.getElementsByName('diet');
+            const problemInput = document.getElementById('problem');
+            const solutionInput = document.getElementById('solution');
+
+            if (isAttending) {
+                dietSection.classList.remove('max-h-0', 'opacity-0');
+                dietSection.classList.add('max-h-96', 'opacity-100');
+                dietInputs.forEach(input => input.disabled = false);
+
+                feedbackContainer.classList.remove('max-h-0', 'opacity-0');
+                feedbackContainer.classList.add('max-h-[1000px]', 'opacity-100');
+                if(problemInput) problemInput.disabled = false;
+                if(solutionInput) solutionInput.disabled = false;
+            } else {
+                dietSection.classList.remove('max-h-96', 'opacity-100');
+                dietSection.classList.add('max-h-0', 'opacity-0');
+                dietInputs.forEach(input => {
+                    input.checked = false;
+                    input.disabled = true;
+                });
+
+                feedbackContainer.classList.remove('max-h-[1000px]', 'opacity-100');
+                feedbackContainer.classList.add('max-h-0', 'opacity-0');
+                if(problemInput) {
+                    problemInput.value = ''; 
+                    problemInput.disabled = true;
+                }
+                if(solutionInput) {
+                    solutionInput.value = ''; 
+                    solutionInput.disabled = true;
+                }
+            }
+        }
+
+        function showPreviewModal() {
+            const form = document.getElementById('registrationForm');
+            if (!form.reportValidity()) return;
+
+            const formData = new FormData(form);
+            let html = '<div class="space-y-3">';
+            
+            const getVal = (name) => formData.get(name) || '<span class="text-gray-400 italic">未填寫</span>';
+            const getRadio = (name, map) => {
+                const val = formData.get(name);
+                return val ? (map[val] || val) : '<span class="text-red-400 italic">未選擇</span>';
+            }
+
+            html += `<div class="flex justify-between border-b border-dashed pb-2"><span>姓名：</span><span class="font-medium text-gray-800">${getVal('name')}</span></div>`;
+            html += `<div class="flex justify-between border-b border-dashed pb-2"><span>科別：</span><span class="font-medium text-gray-800">${getVal('department')}</span></div>`;
+            
+            const attendMap = { 'yes': '🙆‍♂️ 出席', 'no': '🙅‍♀️ 不出席' };
+            html += `<div class="flex justify-between border-b border-dashed pb-2"><span>出席意願：</span><span class="font-medium text-morandi-primary">${getRadio('attendance', attendMap)}</span></div>`;
+            
+            if (formData.get('attendance') === 'yes') {
+                const dietMap = { 'normal': '葷食', 'vegetarian': '素食', 'no_beef': '不吃牛', 'no_pork': '不吃豬' };
+                html += `<div class="flex justify-between border-b border-dashed pb-2"><span>飲食習慣：</span><span class="font-medium text-gray-800">${getRadio('diet', dietMap)}</span></div>`;
+                
+                const problemText = getVal('problem');
+                const solutionText = getVal('solution');
+                html += `<div class="mt-4"><span class="block text-gray-500 text-xs mb-1">問題 (Problem)：</span><p class="bg-gray-50 p-2 rounded text-gray-700">${problemText}</p></div>`;
+                html += `<div class="mt-2"><span class="block text-gray-500 text-xs mb-1">建議 (Solution)：</span><p class="bg-gray-50 p-2 rounded text-gray-700">${solutionText}</p></div>`;
+            } else {
+                html += `<div class="mt-4 text-center text-gray-400 text-xs italic">（因不克出席，無須填寫飲食與建議）</div>`;
+            }
+            html += '</div>';
+
+            document.getElementById('previewContent').innerHTML = html;
+            const modal = document.getElementById('previewModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('div').classList.remove('scale-95');
+                modal.querySelector('div').classList.add('scale-100');
+            }, 10);
+        }
+
+        function closePreviewModal() {
+            const modal = document.getElementById('previewModal');
+            modal.classList.add('opacity-0');
+            modal.querySelector('div').classList.remove('scale-100');
+            modal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        function confirmSubmitFromPreview() {
+            closePreviewModal();
+            handleSubmit(new Event('submit'));
+        }
+
+        function handleSubmit(e) {
+            if (e) e.preventDefault();
+            
+            if (!SCRIPT_URL || SCRIPT_URL.includes('YOUR_SCRIPT_URL_HERE')) {
+                const messageBox = document.createElement('div');
+                messageBox.className = "fixed top-5 right-5 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-[100]";
+                messageBox.innerText = "請先在程式碼中設定有效的 SCRIPT_URL";
+                document.body.appendChild(messageBox);
+                setTimeout(() => messageBox.remove(), 3000);
+                return;
+            }
+
+            const form = document.getElementById('registrationForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const btnText = document.getElementById('btnText');
+            const btnIcon = document.getElementById('btnIcon');
+            const btnLoader = document.getElementById('btnLoader');
+
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-75', 'cursor-not-allowed');
+            btnText.textContent = '傳送中...';
+            btnIcon.classList.add('hidden');
+            btnLoader.classList.remove('hidden');
+
+            const formData = new FormData(form);
+
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: formData,
+                mode: 'no-cors'
+            })
+            .then(() => {
+                const modal = document.getElementById('successModal');
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0');
+                    modal.querySelector('div').classList.remove('scale-95');
+                    modal.querySelector('div').classList.add('scale-100');
+                }, 10);
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                const messageBox = document.createElement('div');
+                messageBox.className = "fixed top-5 right-5 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-[100]";
+                messageBox.innerText = "發送失敗，請聯繫系統管理員。";
+                document.body.appendChild(messageBox);
+                setTimeout(() => messageBox.remove(), 3000);
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+                btnText.textContent = '送出報名表';
+                btnIcon.classList.remove('hidden');
+                btnLoader.classList.add('hidden');
+            });
+        }
+
+        function closeSuccessModal() {
+            const modal = document.getElementById('successModal');
+            modal.classList.add('opacity-0');
+            modal.querySelector('div').classList.remove('scale-100');
+            modal.querySelector('div').classList.add('scale-95');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                document.getElementById('registrationForm').reset();
+                toggleSections(false);
+            }, 300);
+        }
+
+        function addToCalendar() {
+            const eventDetails = {
+                title: '115年度住院醫師座談餐會',
+                start: '20260127T120000',
+                end: '20260127T133000',
+                location: '563會議室',
+                details: '午餐交流｜聽見您的聲音。出席者：陳志成副院長、郭行道副院長等。'
+            };
+            const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(eventDetails.title)}&dates=${eventDetails.start}/${eventDetails.end}&details=${encodeURIComponent(eventDetails.details)}&location=${encodeURIComponent(eventDetails.location)}`;
+            window.open(googleCalendarUrl, '_blank');
+        }
+        
+        window.addEventListener('DOMContentLoaded', (event) => {
+             const yesRadio = document.querySelector('input[name="attendance"][value="yes"]');
+             if (!yesRadio.checked) {
+                 toggleSections(false);
+             }
+        });
+    </script>
+</body>
+</html>
