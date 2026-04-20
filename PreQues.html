@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>115年度住院醫師座談會 - 前測問卷</title>
+    
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 引入 React 和 ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- 引入 Babel 用於解析 JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- 設定字體 -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; }
+    </style>
+</head>
+<body class="bg-[#F0EBE5]">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // ★★★ 您的 Apps Script 網址 ★★★
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzV3opsPd2bsqNDP1eiGHR8egTkLSG-1CjmG64aSOufBzPFdyL2dn-6Mu0nGTaFOpqX/exec"; 
+
+        // --- 圖示組件 (Inline SVGs for standalone HTML) ---
+        const IconCheck = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12"></polyline></svg>
+        );
+        const IconSend = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        );
+        const IconUser = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        );
+        const IconStethoscope = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3" />
+                <path d="M8 15v6" />
+                <path d="M11 27a6 6 0 0 1-6-6" /> 
+                {/* Simplified Stethoscope for basic view */}
+                <path d="M12 13v8" /><path d="M12 21a2 2 0 0 1 0-4" /><path d="M12 21a2 2 0 0 0 0-4" />
+            </svg>
+        );
+        const IconMessageSquare = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        );
+        const IconTarget = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+        );
+        const IconLoader2 = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>
+        );
+
+
+        // --- 主應用程式 ---
+        const App = () => {
+            const [submitted, setSubmitted] = useState(false);
+            const [isSubmitting, setIsSubmitting] = useState(false);
+            const [formData, setFormData] = useState({
+                department: '',
+                rank: '',
+                otherRank: '',
+                q1: null,
+                q2: null,
+                q3: null,
+                q4: null,
+                q5: null,
+                q6: null,
+                q7: null,
+            });
+
+            const handleScoreChange = (key, value) => {
+                setFormData(prev => ({ ...prev, [key]: value }));
+            };
+
+            const handleInputChange = (e) => {
+                const { name, value } = e.target;
+                setFormData(prev => ({ ...prev, [name]: value }));
+            };
+
+            const createToast = (message, type = 'error') => {
+                const toast = document.createElement('div');
+                const bgColor = type === 'error' ? 'bg-[#6B705C]' : 'bg-[#CB997E]';
+                toast.className = `fixed top-4 left-1/2 transform -translate-x-1/2 ${bgColor} text-white px-6 py-3 rounded-full shadow-lg z-50 animate-bounce font-medium tracking-wide`;
+                toast.textContent = message;
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 3000);
+            };
+
+            const handleSubmit = async () => {
+                // 1. 驗證基本資料
+                if (!formData.department || !formData.rank) {
+                    createToast('請協助填寫科部與職級資料', 'error');
+                    return;
+                }
+
+                // 2. 驗證問卷完整性
+                const questions = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7'];
+                const unanswered = questions.filter(q => formData[q] === null);
+                if (unanswered.length > 0) {
+                    createToast(`還有 ${unanswered.length} 題尚未填寫喔`, 'warning');
+                    return;
+                }
+
+                // 3. 送出資料
+                setIsSubmitting(true);
+                const finalRank = formData.rank === 'Other' ? formData.otherRank : formData.rank;
+                const payload = { ...formData, finalRank: finalRank };
+
+                try {
+                    await fetch(GOOGLE_SCRIPT_URL, {
+                        method: "POST",
+                        mode: "no-cors",
+                        headers: { "Content-Type": "text/plain;charset=utf-8" },
+                        body: JSON.stringify(payload),
+                    });
+                    
+                    setSubmitted(true);
+                    window.scrollTo(0, 0);
+                } catch (error) {
+                    console.error("Error", error);
+                    createToast("傳送失敗，請檢查網路連線", 'error');
+                } finally {
+                    setIsSubmitting(false);
+                }
+            };
+
+            const colors = {
+                bg: "bg-[#F0EBE5]", 
+                primary: "text-[#6B705C]", 
+                secondary: "text-[#A5A58D]", 
+                accent: "bg-[#B7B7A4]", 
+                card: "bg-white/90", 
+                button: "bg-[#CB997E]", 
+                buttonHover: "hover:bg-[#DDBEA9]",
+                scaleActive: "bg-[#A5A58D]",
+                scaleInactive: "bg-[#E6E6E6]",
+            };
+
+            if (submitted) {
+                return (
+                    <div className={`min-h-screen ${colors.bg} flex items-center justify-center p-6 font-sans`}>
+                        <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-10 text-center transform transition-all duration-500 scale-100 opacity-100 border border-[#E6E6E6]">
+                            <div className="mx-auto w-20 h-20 bg-[#DDBEA9] rounded-full flex items-center justify-center mb-6 animate-bounce">
+                                <IconCheck size={40} className="text-white" />
+                            </div>
+                            <h2 className={`text-2xl font-bold ${colors.primary} mb-4`}>感謝您的回饋</h2>
+                            <p className="text-gray-600 mb-8 leading-relaxed text-lg">
+                                您的意見對我們優化教學品質至關重要。<br/>
+                                我們期待在座談會上與您深入交流。
+                            </p>
+                            <button onClick={() => window.location.reload()} className={`px-8 py-3 rounded-full text-white font-medium transition-colors duration-300 shadow-md ${colors.button} ${colors.buttonHover}`}>
+                                返回首頁
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className={`min-h-screen ${colors.bg} font-sans selection:bg-[#DDBEA9] selection:text-white pb-20`}>
+                    <header className="relative bg-[#6B705C] text-[#F0EBE5] pt-20 pb-32 px-6 rounded-b-[3rem] shadow-lg overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+                        <div className="max-w-3xl mx-auto relative z-10 text-center">
+                            <span className="inline-block px-4 py-1 mb-4 rounded-full border border-[#B7B7A4] text-sm tracking-wider uppercase bg-[#B7B7A4]/20 backdrop-blur-sm">
+                                Pre-Assessment Survey
+                            </span>
+                            {/* 修改點 1: 改為 114 年度住院醫師座談會 */}
+                            <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">114 年度住院醫師座談會</h1>
+                            
+                            {/* 修改點 2: 改為 前測問卷 */}
+                            <h2 className="text-xl md:text-2xl font-medium text-[#DDBEA9] mb-6">前測問卷</h2>
+                            
+                            <p className="text-[#F0EBE5]/90 text-sm md:text-base leading-relaxed max-w-2xl mx-auto tracking-wide">
+                                本問卷目的在於了解住院醫師在臨床與教學現場的實際學習阻礙，並評估座談會是否有助於促成具體、可執行的教學品質改善方向。
+                            </p>
+                        </div>
+                    </header>
+
+                    <main className="max-w-3xl mx-auto px-4 -mt-20 relative z-20 space-y-8">
+                        <SectionCard icon={<IconUser size={24} className="text-[#CB997E]" />} title="基本資料" description="請填寫您的職級與所屬科部">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-600 ml-1">科部</label>
+                                    <input type="text" name="department" value={formData.department} onChange={handleInputChange} placeholder="例如：內科部" className="w-full px-4 py-3 bg-[#F7F5F3] border border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-[#CB997E]/50 focus:border-[#CB997E]/30 outline-none transition-all placeholder-gray-400 text-gray-700" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-600 ml-1">職級</label>
+                                    <div className="flex flex-wrap gap-3">
+                                        {['R1', 'R2', 'R3', 'R4'].map((r) => (
+                                            <button key={r} onClick={() => setFormData(prev => ({ ...prev, rank: r, otherRank: '' }))} className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-sm ${formData.rank === r ? 'bg-[#CB997E] text-white shadow-md transform scale-105' : 'bg-[#F7F5F3] text-gray-500 hover:bg-[#EDE0D4] hover:text-[#6B705C]'}`}>{r}</button>
+                                        ))}
+                                        <input type="text" placeholder="其他" value={formData.otherRank} onChange={(e) => setFormData(prev => ({ ...prev, rank: 'Other', otherRank: e.target.value }))} onClick={() => setFormData(prev => ({...prev, rank: 'Other'}))} className={`px-4 py-2 w-24 rounded-lg text-sm bg-[#F7F5F3] border border-transparent focus:bg-white focus:ring-2 focus:ring-[#CB997E]/50 outline-none transition-all text-gray-700 ${formData.rank === 'Other' ? 'ring-2 ring-[#CB997E]/50 bg-white' : ''}`} />
+                                    </div>
+                                </div>
+                            </div>
+                        </SectionCard>
+
+                        <SectionCard icon={<IconStethoscope size={24} className="text-[#6B705C]" />} title="教學與臨床流程現況" description="請評估以下敘述與您現況的符合程度 (1=非常不同意, 5=非常同意)">
+                            <LikertQuestion id="q1" text="我在日常工作中，經常因資訊系統或流程不順，影響臨床學習或教學效率。" value={formData.q1} onChange={handleScoreChange} colors={colors} />
+                            <LikertQuestion id="q2" text="目前的臨床系統設計（如病歷、報告、影像系統），未能充分反映住院醫師的實際使用需求。" value={formData.q2} onChange={handleScoreChange} colors={colors} />
+                            <LikertQuestion id="q3" text="我認為目前有相當比例的工作時間，被耗費在「非教學本質」的重複或低效率作業上。" value={formData.q3} onChange={handleScoreChange} colors={colors} />
+                        </SectionCard>
+
+                        <SectionCard icon={<IconMessageSquare size={24} className="text-[#A5A58D]" />} title="教學互動與表達環境" description="請評估溝通管道與心理安全感">
+                            <LikertQuestion id="q4" text="我有機會向院方或教學主管表達實際影響學習的問題。" value={formData.q4} onChange={handleScoreChange} colors={colors} />
+                            <LikertQuestion id="q5" text="即使提出不同意見，我也不擔心會對自己造成負面影響。" value={formData.q5} onChange={handleScoreChange} colors={colors} />
+                        </SectionCard>
+
+                        <SectionCard icon={<IconTarget size={24} className="text-[#DDBEA9]" />} title="整體期待" description="對本次座談會的期望">
+                            <LikertQuestion id="q6" text="我期待本次座談能針對實際教學或臨床問題，提出具體可行的改善方向。" value={formData.q6} onChange={handleScoreChange} colors={colors} />
+                            <LikertQuestion id="q7" text="我認為住院醫師參與院內制度或流程改善，對教學品質是有幫助的。" value={formData.q7} onChange={handleScoreChange} colors={colors} />
+                        </SectionCard>
+
+                        <div className="flex justify-center pt-8">
+                            <button onClick={handleSubmit} disabled={isSubmitting} className={`group relative px-12 py-4 rounded-full text-white font-semibold text-lg shadow-lg transition-all duration-300 overflow-hidden ${isSubmitting ? 'bg-[#A5A58D] cursor-not-allowed' : `${colors.button} hover:shadow-xl hover:shadow-[#CB997E]/30 transform hover:-translate-y-1`}`}>
+                                {isSubmitting ? (
+                                    <span className="relative flex items-center gap-2"><IconLoader2 size={20} className="animate-spin" /> 處理中...</span>
+                                ) : (
+                                    <>
+                                        <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                                        <span className="relative flex items-center gap-2">提交問卷 <IconSend size={20} /></span>
+                                    </>
+                                )}
+                            </button>
+                        </div>
+
+                        <div className="text-center text-[#6B705C]/60 text-sm pb-12">
+                            {/* 修改點 3: 新增 教學部 住院醫師組 */}
+                            問卷結果僅用於教學品質改善與制度優化，請安心填寫。教學部 住院醫師組
+                        </div>
+                    </main>
+                </div>
+            );
+        };
+
+        const SectionCard = ({ icon, title, description, children }) => (
+            <div className="bg-white/90 backdrop-blur-md rounded-3xl p-6 md:p-8 shadow-sm border border-white/50 hover:shadow-lg hover:shadow-[#DDBEA9]/10 transition-all duration-300">
+                <div className="flex items-start gap-4 mb-6">
+                    <div className="p-3 bg-[#F0EBE5] rounded-2xl shrink-0 shadow-inner">{icon}</div>
+                    <div>
+                        <h3 className="text-xl font-bold text-[#6B705C] tracking-wide">{title}</h3>
+                        <p className="text-sm text-[#A5A58D] mt-1 font-medium">{description}</p>
+                    </div>
+                </div>
+                <div className="space-y-6">{children}</div>
+            </div>
+        );
+
+        const LikertQuestion = ({ id, text, value, onChange, colors }) => (
+            <div className="pb-4 border-b border-[#F0EBE5] last:border-0 last:pb-0">
+                <p className="text-[#4A4A4A] font-medium mb-4 leading-relaxed text-[15px]">{text}</p>
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <span className="text-xs font-bold text-[#A5A58D] hidden sm:block">非常不同意</span>
+                    <div className="flex gap-3 w-full sm:w-auto justify-between sm:justify-center px-1">
+                        {[1, 2, 3, 4, 5].map((score) => (
+                            <button key={score} onClick={() => onChange(id, score)} className={`group relative w-10 h-10 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 border ${value === score ? `${colors.button} border-[#CB997E] text-white shadow-lg scale-110` : 'bg-[#F7F5F3] border-transparent text-gray-400 hover:bg-[#E6E6E6] hover:scale-105'}`}>
+                                <span className={`text-sm font-bold z-10 ${value === score ? 'text-white' : 'text-[#6B705C]'}`}>{score}</span>
+                                {value === score && <span className="absolute inset-0 rounded-full bg-white/20 animate-ping"></span>}
+                            </button>
+                        ))}
+                    </div>
+                    <span className="text-xs font-bold text-[#A5A58D] hidden sm:block">非常同意</span>
+                    <div className="flex justify-between w-full sm:hidden text-xs font-bold text-[#A5A58D] px-2 mt-[-8px]"><span>不同意</span><span>同意</span></div>
+                </div>
+            </div>
+        );
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
