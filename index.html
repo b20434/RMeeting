@@ -1,12 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="zh-TW">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>住院醫師座談會成效追蹤儀表板</title>
-
     <!-- React & Libraries -->
     <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js"></script>
@@ -70,7 +67,6 @@
 </head>
 
 <body class="bg-[#F5F5F3] text-slate-700 text-base">
-
     <div id="root"></div>
 
     <script type="text/babel">
@@ -79,7 +75,6 @@
 
         // --- 設定與常數 ---
         const API_URL = "https://script.google.com/macros/s/AKfycbwp8wbNQaU0J9SQX6r1EUdhuAvnfDgsyfSXkIjtOHtGeXgu8hSN5_jKQ9_WqpFbvhkR9g/exec";
-        
         // 更新頻率為 1 分鐘
         const REFRESH_INTERVAL = 60000; 
 
@@ -369,7 +364,6 @@
                     else setIsRefreshing(true);
 
                     const response = await fetch(`${API_URL}?t=${new Date().getTime()}`);
-                    
                     if (!response.ok) throw new Error('網路回應異常');
                     const result = await response.json();
                     
@@ -580,9 +574,10 @@
                                             {isRefreshing ? "正在讀取 Sheet 最新內容..." : "已顯示 Sheet 最新進度"}
                                         </div>
                                     </div>
-                                    <div className="overflow-x-auto">
+                                    {/* 新增/修改：加入 min-h-[400px] 確保當表格列數較少時，向上展開的 Tooltip 不會被此容器切斷 */}
+                                    <div className="overflow-x-auto min-h-[400px]">
                                         <table className="w-full text-left border-collapse">
-                                            <thead className="bg-slate-50 text-slate-600 text-sm tracking-wider sticky top-0">
+                                            <thead className="bg-slate-50 text-slate-600 text-sm tracking-wider sticky top-0 z-10">
                                                 <tr>
                                                     <th className="p-3 font-bold w-12 text-center" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>場次</th>
                                                     <th className="p-3 font-bold w-12 text-center" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>狀態</th>
@@ -631,13 +626,22 @@
                                                                                     <span className="text-[10px] text-slate-400">{point.date}</span>
                                                                                 </div>
                                                                                 {point.summary && (
-                                                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-50 pointer-events-none">
-                                                                                        <div className="bg-slate-800 text-white text-xs rounded-lg px-3 py-2 shadow-lg max-w-[200px] whitespace-pre-wrap">
-                                                                                            <div className="font-bold text-amber-300 mb-1">{point.label}</div>
-                                                                                            <div className="text-slate-300 mb-1">{point.date}</div>
-                                                                                            <div className="border-t border-slate-600 pt-1 mt-1">{point.summary}</div>
+                                                                                    /* 新增/修改：大幅優化 Tooltip 的寬度 (min-w-[240px] max-w-[320px])、Padding (p-4) 與文字自動換行 (break-words leading-relaxed)，解決文字底部被切斷問題 */
+                                                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 hidden group-hover:block z-[100] pointer-events-none w-max min-w-[240px] max-w-[320px]">
+                                                                                        <div className="bg-slate-800 text-white text-[13px] rounded-xl p-4 shadow-2xl whitespace-pre-wrap break-words leading-relaxed border border-slate-700/80">
+                                                                                            <div className="font-bold mb-2 flex items-center gap-2" style={{ color: point.color || '#fbbf24' }}>
+                                                                                                <span className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: point.color || '#fbbf24' }}></span>
+                                                                                                {point.label}
+                                                                                            </div>
+                                                                                            <div className="text-slate-300 mb-2.5 font-mono text-xs bg-slate-900/60 inline-block px-2.5 py-1 rounded-md border border-slate-700/50">
+                                                                                                {point.date}
+                                                                                            </div>
+                                                                                            <div className="border-t border-slate-600/80 pt-3 mt-1 text-slate-100 text-left">
+                                                                                                {point.summary}
+                                                                                            </div>
                                                                                         </div>
-                                                                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+                                                                                        {/* 加大倒三角形使其與新尺寸更搭配 */}
+                                                                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-800"></div>
                                                                                     </div>
                                                                                 )}
                                                                                 {idx < timePoints.length - 1 && (
@@ -696,5 +700,4 @@
         root.render(<App />);
     </script>
 </body>
-
 </html>
