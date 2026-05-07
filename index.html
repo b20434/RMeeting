@@ -46,15 +46,6 @@
             }
         }
 
-        .animate-spin-slow {
-            animation: spin 3s linear infinite;
-        }
-
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
         .sync-pulse {
             animation: pulse-blue 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
@@ -62,6 +53,11 @@
         @keyframes pulse-blue {
             0%, 100% { opacity: 1; }
             50% { opacity: .3; }
+        }
+
+        .tooltip-container {
+            position: relative;
+            z-index: 50;
         }
     </style>
 </head>
@@ -75,12 +71,27 @@
 
         // --- 設定與常數 ---
         const API_URL = "https://script.google.com/macros/s/AKfycbwp8wbNQaU0J9SQX6r1EUdhuAvnfDgsyfSXkIjtOHtGeXgu8hSN5_jKQ9_WqpFbvhkR9g/exec";
-        // 更新頻率為 1 分鐘
         const REFRESH_INTERVAL = 60000; 
 
+        // [修改區塊] 新增 20260421 會議場次與 GitHub 圖片連結
         const MEETINGS = [
-            { id: '20251224', date: '2025/12/24', displayDate: '2025年12月24日 (週三)', time: '12:00', location: '554會議室', dateFilter: ['12/24/2025', '2025/12/24', '2025-12-24', '12/24'], photos: ['photos/20251224_01.jpg', 'photos/20251224_02.jpg', 'photos/20251224_03.jpg', 'photos/20251224_04.jpg'] },
-            { id: '20260127', date: '2026/01/27', displayDate: '2026年01月27日 (週一)', time: '12:00', location: '563會議室', dateFilter: ['01/27/2026', '1/27/2026', '2026/01/27', '2026-01-27', '01/27', '1/27'], photos: ['photos/20260127_01.jpg', 'photos/20260127_02.jpg', 'photos/20260127_03.jpg', 'photos/20260127_04.jpg', 'photos/20260127_05.jpg'] }
+            { id: '20251224', date: '2025/12/24', displayDate: '2025年12月24日 (週三)', time: '12:00', location: '554會議室', dateFilter: ['12/24/2025', '2025/12/24', '2025-12-24', '12/24'], photos: [] },
+            { id: '20260127', date: '2026/01/27', displayDate: '2026年01月27日 (週一)', time: '12:00', location: '563會議室', dateFilter: ['01/27/2026', '1/27/2026', '2026/01/27', '2026-01-27', '01/27', '1/27'], photos: [] },
+            { 
+                id: '20260421', 
+                date: '2026/04/21', 
+                displayDate: '2026年04月21日 (週二)', 
+                time: '12:00', 
+                location: '554會議室', 
+                dateFilter: ['04/21/2026', '4/21/2026', '2026/04/21', '2026-04-21', '04/21', '4/21'], 
+                photos: [
+                    'https://raw.githubusercontent.com/b20434/RMeeting/main/photos/20260421_1.JPG',
+                    'https://raw.githubusercontent.com/b20434/RMeeting/main/photos/20260421_2.JPG',
+                    'https://raw.githubusercontent.com/b20434/RMeeting/main/photos/20260421_3.JPG',
+                    'https://raw.githubusercontent.com/b20434/RMeeting/main/photos/20260421_4.JPG',
+                    'https://raw.githubusercontent.com/b20434/RMeeting/main/photos/20260421_5.JPG'
+                ] 
+            }
         ];
 
         const COLORS = {
@@ -104,29 +115,29 @@
 
         const Icons = {
             LayoutDashboard: () => <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="9" x="3" y="3" rx="1" /><rect width="7" height="5" x="14" y="3" rx="1" /><rect width="7" height="9" x="14" y="12" rx="1" /><rect width="7" height="5" x="3" y="16" rx="1" /></svg>,
-            FileText: ({ size = 28 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" /><polyline points="14 2 14 8 20 8" /></svg>,
+            FileText: ({ size = 28, className }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" /><polyline points="14 2 14 8 20 8" /></svg>,
             CheckCircle2: ({ size = 28 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" /></svg>,
             Clock: ({ size = 28 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>,
             HelpCircle: ({ size = 28 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><path d="M12 17h.01" /></svg>,
             Users: ({ size = 28 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>,
             Calendar: ({ size = 28 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2" /><line x1="16" x2="16" y1="2" y2="6" /><line x1="8" x2="8" y1="2" y2="6" /><line x1="3" x2="21" y1="10" y2="10" /></svg>,
-            ChevronRight: ({ size = 28 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>,
-            Filter: ({ size = 28 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg>,
+            ChevronRight: ({ size = 20 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>,
+            Filter: ({ size = 20 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg>,
             Loader2: ({ size = 28, className }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>,
-            AlertCircle: ({ size = 28 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" x2="12" y1="8" y2="12" /><line x1="12" x2="12.01" y1="16" y2="16" /></svg>,
-            Stethoscope: ({ size = 28 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3" /><path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4" /><circle cx="20" cy="10" r="2" /></svg>,
-            UserCheck: ({ size = 28 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><polyline points="16 11 18 13 22 9" /></svg>,
+            AlertCircle: ({ size = 48 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" x2="12" y1="8" y2="12" /><line x1="12" x2="12.01" y1="16" y2="16" /></svg>,
+            Stethoscope: ({ size = 16 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3" /><path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4" /><circle cx="20" cy="10" r="2" /></svg>,
+            UserCheck: ({ size = 16 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><polyline points="16 11 18 13 22 9" /></svg>,
             Camera: ({ size = 28 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" /><circle cx="12" cy="13" r="3" /></svg>,
-            Flag: ({ size = 28 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><line x1="4" x2="4" y1="22" y2="15" /></svg>,
+            Flag: ({ size = 14, className }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><line x1="4" x2="4" y1="22" y2="15" /></svg>,
             RefreshCw: ({ size = 18, className }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M3 21v-5h5" /></svg>,
         };
 
         const TrackingTimeline = ({ issue }) => {
             const timelineData = [
                 { label: '提案', date: issue.submitDate, summary: '', type: 'start' },
-                { label: '第一次追蹤', date: issue.track1Date, summary: issue.track1Summary, type: 'track' },
-                { label: '第二次追蹤', date: issue.track2Date, summary: issue.track2Summary, type: 'track' },
-                { label: '第三次追蹤', date: issue.track3Date, summary: issue.track3Summary, type: 'track' },
+                { label: '追蹤1', date: issue.track1Date, summary: issue.track1Summary, type: 'track' },
+                { label: '追蹤2', date: issue.track2Date, summary: issue.track2Summary, type: 'track' },
+                { label: '追蹤3', date: issue.track3Date, summary: issue.track3Summary, type: 'track' },
                 { label: '結案', date: issue.closeDate, summary: '', type: 'end' },
             ].filter(item => item.date && item.date !== '');
 
@@ -153,17 +164,10 @@
                             </div>
                         </div>
                     )}
-                    {issue.deadline && (
-                        <div className="flex items-center gap-2 mb-4 text-sm">
-                            <Icons.Flag size={14} className="text-orange-500" />
-                            <span className="text-slate-500">預計完成：</span>
-                            <span className="font-medium text-slate-700">{issue.deadline}</span>
-                        </div>
-                    )}
-                    <div className="relative">
-                        <div className="flex items-start justify-between gap-2 overflow-x-auto pb-2">
+                    <div className="relative overflow-x-auto pb-2 custom-scrollbar">
+                        <div className="flex items-start justify-between min-w-[300px] gap-2">
                             {timelineData.map((item, idx) => (
-                                <div key={idx} className="flex flex-col items-center min-w-[80px] flex-1">
+                                <div key={idx} className="flex flex-col items-center flex-1">
                                     <div className="flex items-center w-full">
                                         {idx > 0 && <div className="flex-1 h-0.5 bg-green-400"></div>}
                                         <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${item.type === 'end' ? 'bg-green-500 border-green-500' :
@@ -173,12 +177,7 @@
                                         {idx < timelineData.length - 1 && <div className="flex-1 h-0.5 bg-green-400"></div>}
                                     </div>
                                     <span className="text-xs font-medium text-slate-600 mt-2 text-center">{item.label}</span>
-                                    <span className="text-xs text-slate-400 text-center">{item.date}</span>
-                                    {item.summary && (
-                                        <span className="text-xs text-slate-500 mt-1 text-center line-clamp-2 max-w-[100px]" title={item.summary}>
-                                            {item.summary.length > 20 ? item.summary.substring(0, 20) + '...' : item.summary}
-                                        </span>
-                                    )}
+                                    <span className="text-[10px] text-slate-400 text-center">{item.date}</span>
                                 </div>
                             ))}
                         </div>
@@ -191,8 +190,13 @@
             let color = COLORS.subText, bg = '#E2E8F0', Icon = Icons.HelpCircle;
             if (status && status.includes('已結案')) { color = '#2F855A'; bg = '#E6FFFA'; Icon = Icons.CheckCircle2; }
             else if (status && status.includes('進行中')) { color = '#C05621'; bg = '#FEEBC8'; Icon = Icons.Clock; }
-            else if (status && (status.includes('待決議') || status.includes('未'))) { color = '#744210'; bg = '#FAF5FF'; Icon = Icons.HelpCircle; }
-            return <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-base font-medium border whitespace-nowrap`} style={{ color, backgroundColor: bg, borderColor: `${color}30` }}><Icon size={16} /> {status || '未定義'}</span>;
+            else if (status && (status.includes('待決議') || status.includes('待'))) { color = '#744210'; bg = '#FAF5FF'; Icon = Icons.HelpCircle; }
+            return (
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-bold border whitespace-nowrap`} 
+                      style={{ color, backgroundColor: bg, borderColor: `${color}30` }}>
+                    <Icon size={14} /> {status || '未定義'}
+                </span>
+            );
         };
 
         const StatCard = ({ title, value, subtext, icon: Icon, color }) => (
@@ -213,132 +217,104 @@
                 return trackingData.filter(item => item.date === meeting.id);
             }, [trackingData, meeting]);
 
-            const meetingAttendance = useMemo(() => {
-                return attendanceData.filter(person =>
+            const stats = useMemo(() => {
+                const meetingAttendance = attendanceData.filter(person =>
                     meeting.dateFilter.some(df => (person['場次'] || '').includes(df))
                 );
-            }, [attendanceData, meeting]);
 
-            const stats = useMemo(() => {
                 const residents = meetingAttendance.filter(p => {
                     const title = p['職稱'] || '';
                     const role = p['職級'] || '';
                     return role === '住院醫師' || RESIDENT_KEYWORDS.some(k => title.includes(k));
                 });
-                const residentDepts = [...new Set(residents.map(r => r['科別名'] || r['科別'] || '').filter(d => d))];
-                const advisors = meetingAttendance.filter(p => p['職級'] === '指導長官').map(p => ({ name: p['姓名'], title: p['職稱'] }));
-                const chairs = meetingAttendance.filter(p => p['職級'] === '主席').map(p => ({ name: p['姓名'], title: p['職稱'] }));
-                const teachingSups = meetingAttendance.filter(p => p['職級'] === '教學主管').map(p => ({ name: p['姓名'], title: p['職稱'] }));
-                const attendingSups = meetingAttendance.filter(p => p['職級'] === '列席主管').map(p => ({ name: p['姓名'], title: p['職稱'] }));
-                const coordinators = meetingAttendance.filter(p => p['職級'] === '教學負責人').map(p => ({ name: p['姓名'], title: p['職稱'] }));
+                
+                const depts = [...new Set(residents.map(r => r['科別名'] || r['科別'] || '').filter(d => d))];
+                const getByRole = (role) => meetingAttendance.filter(p => p['職級'] === role).map(p => ({ name: p['姓名'], title: p['職稱'] }));
 
                 return {
-                    totalAttendees: meetingAttendance.length,
                     residentCount: residents.length,
                     totalIssues: meetingIssues.length,
-                    residentDepts,
-                    chairs,
-                    advisors,
-                    teachingSups,
-                    attendingSups,
-                    coordinators
+                    depts,
+                    chairs: getByRole('主席'),
+                    advisors: getByRole('指導長官'),
+                    teachingSups: getByRole('教學主管'),
+                    attendingSups: getByRole('列席主管'),
+                    coordinators: getByRole('教學負責人')
                 };
-            }, [meetingAttendance, meetingIssues]);
+            }, [attendanceData, meeting, meetingIssues]);
 
             return (
                 <div className="animate-fade-in space-y-8">
-                    <div className="bg-gradient-to-r from-[#6B859E] to-[#556b80] rounded-2xl p-6 text-white shadow-lg">
+                    <div className="bg-gradient-to-r from-[#6B859E] to-[#556b80] rounded-3xl p-8 text-white shadow-lg">
                         <div className="flex flex-wrap items-center gap-4 mb-4 opacity-90 text-base">
                             <Icons.Calendar size={18} /> {meeting.displayDate} {meeting.time}
                             <span className="mx-2 hidden md:inline">|</span>
-                            <span className="block md:inline w-full md:w-auto mt-1 md:mt-0">地點：{meeting.location}</span>
+                            <span>地點：{meeting.location}</span>
                         </div>
-                        <h2 className="text-3xl md:text-4xl font-bold mb-6">{meeting.id}座談會</h2>
-                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                            <div className="bg-white/10 backdrop-blur-sm px-4 py-3 rounded-xl border border-white/20">
-                                <div className="flex items-center gap-2 mb-1 opacity-90 text-sm"><Icons.Users size={16} /> 住院醫師出席數</div>
-                                <span className="text-3xl font-bold">{stats.residentCount} <span className="text-base font-normal">人</span></span>
+                        <h2 className="text-4xl font-bold mb-8">{meeting.id} 座談會數據概覽</h2>
+                        
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                            <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20">
+                                <p className="text-xs opacity-70 mb-1">住院醫師出席</p>
+                                <p className="text-3xl font-bold">{stats.residentCount} <span className="text-sm font-normal">人</span></p>
                             </div>
-                            <div className="bg-white/10 backdrop-blur-sm px-4 py-3 rounded-xl border border-white/20">
-                                <div className="flex items-center gap-2 mb-1 opacity-90 text-sm"><Icons.FileText size={16} /> 提案數量</div>
-                                <span className="text-3xl font-bold">{stats.totalIssues} <span className="text-base font-normal">案</span></span>
+                            <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20">
+                                <p className="text-xs opacity-70 mb-1">決議提案數</p>
+                                <p className="text-3xl font-bold">{stats.totalIssues} <span className="text-sm font-normal">案</span></p>
                             </div>
-                            <div className="bg-white/10 backdrop-blur-sm px-4 py-3 rounded-xl border border-white/20 col-span-2 md:col-span-2 lg:col-span-4">
-                                <div className="flex items-center gap-2 mb-2 opacity-90 text-sm"><Icons.Stethoscope size={16} /> 住院醫師科別</div>
+                            <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20 col-span-2 md:col-span-1 lg:col-span-4">
+                                <p className="text-xs opacity-70 mb-2">出席科別</p>
                                 <div className="flex flex-wrap gap-2">
-                                    {stats.residentDepts.length > 0 ? stats.residentDepts.map((d, i) => <span key={i} className="text-sm bg-white/20 px-2.5 py-1 rounded text-white whitespace-nowrap">{d}</span>) : <span className="text-sm opacity-60">無資料</span>}
-                                </div>
-                            </div>
-                            <div className="bg-white/10 backdrop-blur-sm px-4 py-3 rounded-xl border border-white/20 col-span-2 md:col-span-4 lg:col-span-6">
-                                <div className="flex items-center gap-2 mb-2 opacity-90 text-sm"><Icons.UserCheck size={16} /> 出席長官</div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
-                                    {stats.chairs.length > 0 && <div><span className="text-xs text-white/70 block mb-1">主席</span><div className="flex flex-wrap gap-1.5">{stats.chairs.map((p, i) => <span key={i} className="text-sm bg-[#D6A28D]/90 px-2 py-0.5 rounded text-white">{p.name} {p.title}</span>)}</div></div>}
-                                    {stats.advisors.length > 0 && <div><span className="text-xs text-white/70 block mb-1">指導長官</span><div className="flex flex-wrap gap-1.5">{stats.advisors.map((p, i) => <span key={i} className="text-sm bg-[#D6A28D]/90 px-2 py-0.5 rounded text-white">{p.name} {p.title}</span>)}</div></div>}
-                                    {stats.teachingSups.length > 0 && <div><span className="text-xs text-white/70 block mb-1">教學主管</span><div className="flex flex-wrap gap-1.5">{stats.teachingSups.map((p, i) => <span key={i} className="text-sm bg-[#D6A28D]/90 px-2 py-0.5 rounded text-white">{p.name} {p.title}</span>)}</div></div>}
-                                    {stats.attendingSups.length > 0 && <div><span className="text-xs text-white/70 block mb-1">列席主管</span><div className="flex flex-wrap gap-1.5">{stats.attendingSups.map((p, i) => <span key={i} className="text-sm bg-[#D6A28D]/90 px-2 py-0.5 rounded text-white">{p.name} {p.title}</span>)}</div></div>}
-                                    {stats.coordinators.length > 0 && <div><span className="text-xs text-white/70 block mb-1">教學負責人</span><div className="flex flex-wrap gap-1.5">{stats.coordinators.map((p, i) => <span key={i} className="text-sm bg-[#D6A28D]/90 px-2 py-0.5 rounded text-white">{p.name} {p.title}</span>)}</div></div>}
+                                    {stats.depts.length > 0 ? stats.depts.map((d, i) => <span key={i} className="text-xs bg-white/20 px-2 py-1 rounded">{d}</span>) : "-"}
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-100">
-                        <div className="p-8 border-b border-slate-100 sticky top-0 bg-white z-10 rounded-t-2xl">
-                            <h3 className="font-bold text-2xl text-slate-700 flex items-center gap-3">
-                                <Icons.FileText className="text-slate-400" size={28} /> 本場次決議成效追蹤
-                            </h3>
-                        </div>
-                        <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-                            {meetingIssues.length > 0 ? meetingIssues.map((issue, idx) => (
-                                <div key={idx} className="border border-slate-200 rounded-xl p-8 bg-slate-50/50 flex flex-col h-full hover:border-slate-300 transition-all">
-                                    <div className="flex justify-between items-start mb-5">
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-base font-bold text-slate-500 bg-white border px-3 py-1 rounded">#{issue.id}</span>
-                                            <span className="text-lg font-semibold text-slate-600">{issue.category}</span>
-                                        </div>
-                                        <StatusBadge status={issue.status} />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {meetingIssues.map((issue, idx) => (
+                            <div key={idx} className="bg-white rounded-2xl p-8 border border-slate-100 shadow-sm flex flex-col h-full hover:shadow-md transition-all">
+                                <div className="flex justify-between items-start mb-6">
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-sm font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded border">#{issue.id}</span>
+                                        <span className="text-base font-semibold text-slate-500">{issue.category}</span>
                                     </div>
-                                    <h4 className="text-2xl font-bold text-slate-800 mb-6 flex-grow leading-tight">{issue.goal}</h4>
-                                    <TrackingTimeline issue={issue} />
-                                    <div className="grid grid-cols-2 gap-6 text-lg text-slate-600 mb-6 bg-white p-5 rounded-lg border border-slate-100">
-                                        <div><span className="block text-sm text-slate-400 mb-1.5">提案者</span>{issue.proposer}</div>
-                                        <div><span className="block text-sm text-slate-400 mb-1.5">負責窗口 (PIC)</span>{issue.pic || '-'}</div>
-                                    </div>
-                                    <div className="flex items-start gap-4 bg-[#F8F9FA] p-5 rounded-lg border-l-4 mt-auto" style={{ borderLeftColor: COLORS.primary }}>
-                                        <div className="mt-1 text-slate-400 flex-shrink-0"><Icons.ChevronRight size={20} /></div>
-                                        <div>
-                                            <span className="block text-base font-bold text-slate-500 mb-1">
-                                                {issue.progress ? '最新進度' : '會議決議'}
-                                            </span>
-                                            <p className="text-lg text-slate-700 leading-relaxed">{issue.progress || issue.resolution || '尚無資料'}</p>
-                                        </div>
+                                    <StatusBadge status={issue.status} />
+                                </div>
+                                <h4 className="text-2xl font-bold text-slate-800 mb-6 leading-tight flex-grow">{issue.goal}</h4>
+                                <TrackingTimeline issue={issue} />
+                                <div className="grid grid-cols-2 gap-4 text-sm text-slate-500 mb-6 bg-slate-50 p-4 rounded-xl">
+                                    <div><p className="text-xs opacity-60 mb-1">提案者</p><p className="font-medium text-slate-700">{issue.proposer}</p></div>
+                                    <div><p className="text-xs opacity-60 mb-1">負責單位</p><p className="font-medium text-slate-700">{issue.pic || '-'}</p></div>
+                                </div>
+                                <div className="flex items-start gap-3 bg-blue-50/50 p-5 rounded-xl border-l-4 border-[#6B859E]">
+                                    <Icons.ChevronRight className="text-slate-400 mt-1" />
+                                    <div>
+                                        <p className="text-sm font-bold text-slate-500 mb-1">最新進度</p>
+                                        <p className="text-base text-slate-700 leading-relaxed">{issue.progress || issue.resolution || '尚無資料'}</p>
                                     </div>
                                 </div>
-                            )) : (
-                                <div className="col-span-2 text-center py-12 text-slate-400">
-                                    <Icons.FileText size={48} className="mx-auto mb-4 opacity-50" />
-                                    <p className="text-xl">此場次尚無議題資料</p>
-                                </div>
-                            )}
-                        </div>
+                            </div>
+                        ))}
                     </div>
 
+                    {/* [新增區塊] 會議相簿展示 */}
                     {meeting.photos && meeting.photos.length > 0 && (
-                        <div className="bg-white rounded-2xl shadow-sm border border-slate-100">
-                            <div className="p-8 border-b border-slate-100">
-                                <h3 className="font-bold text-2xl text-slate-700 flex items-center gap-3">
-                                    <Icons.Camera className="text-slate-400" size={28} /> 會議紀錄照片
-                                </h3>
+                        <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+                            <div className="p-8 border-b border-slate-100 flex items-center gap-3">
+                                <Icons.Camera className="text-slate-400" />
+                                <h3 className="font-bold text-2xl">會議現場記錄</h3>
                             </div>
                             <div className="p-8">
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {meeting.photos.map((photo, idx) => (
-                                        <div key={idx} className="aspect-[4/3] rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow cursor-pointer group">
-                                            <img
-                                                src={photo}
-                                                alt={`會議照片 ${idx + 1}`}
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                                onClick={() => window.open(photo, '_blank')}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {meeting.photos.map((url, i) => (
+                                        <div key={i} className="aspect-video rounded-2xl overflow-hidden bg-slate-100 shadow-sm hover:shadow-lg transition-all group">
+                                            <img 
+                                                src={url} 
+                                                alt={`會議相片 ${i+1}`} 
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                loading="lazy"
+                                                onError={(e) => { e.target.src = 'https://placehold.co/600x400/f1f5f9/64748b?text=Image+Not+Found'; }}
                                             />
                                         </div>
                                     ))}
@@ -364,11 +340,11 @@
                     else setIsRefreshing(true);
 
                     const response = await fetch(`${API_URL}?t=${new Date().getTime()}`);
-                    if (!response.ok) throw new Error('網路回應異常');
+                    if (!response.ok) throw new Error('網路回應異常，請檢查 API 連結');
                     const result = await response.json();
                     
                     setData(result);
-                    setLastUpdated(new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+                    setLastUpdated(new Date().toLocaleTimeString('zh-TW'));
                     setError(null);
                 } catch (err) {
                     console.error("Fetch Error:", err);
@@ -381,40 +357,31 @@
 
             useEffect(() => {
                 fetchData();
-                const timer = setInterval(() => {
-                    fetchData(true);
-                }, REFRESH_INTERVAL);
+                const timer = setInterval(() => fetchData(true), REFRESH_INTERVAL);
                 return () => clearInterval(timer);
             }, [fetchData]);
 
             const trackingData = useMemo(() => {
-                const mapped = data.tracking.map(item => {
-                    // MODIFIED: 提取結案日期欄位值，用來作為最高優先級判斷
+                const mapped = (data.tracking || []).map(item => {
                     const closeDateStr = item['結案日期'] || item['關閉日期'] || item['結案時間'] || '';
-                    
-                    // MODIFIED: 提取狀態文字欄位
-                    let rawStatus = (item['現狀'] || item['狀態'] || item['追蹤現狀'] || item['處理狀態'] || item['結案情形'] || '').toString();
+                    let rawStatus = (item['現狀'] || item['狀態'] || '').toString();
                     let status = '待決議';
                     
-                    // MODIFIED: 優先權 1 - 只要有填寫「結案日期」，狀態強制為已結案
                     if (closeDateStr && closeDateStr.trim() !== '') {
                         status = '已結案';
-                    } 
-                    // MODIFIED: 優先權 2 - 文字判斷
-                    else if (rawStatus.includes('已結案') || rawStatus.includes('結案') || rawStatus.includes('完成') || rawStatus.includes('Close')) {
+                    } else if (rawStatus.includes('已結案') || rawStatus.includes('完成')) {
                         status = '已結案';
-                    } else if (rawStatus.includes('進行中') || rawStatus.includes('開發中') || rawStatus.includes('評估') || rawStatus.includes('規劃') || rawStatus.includes('Ongoing')) {
+                    } else if (rawStatus.includes('進行中') || rawStatus.includes('評估')) {
                         status = '進行中';
-                    } else if (rawStatus.includes('待決議') || rawStatus.includes('待') || rawStatus === '') {
-                        status = '待決議';
                     }
 
-                    const proposer = item['提案者'] || '';
-                    const dept = proposer.includes('/') ? proposer.split('/')[0] : proposer;
-
                     let meetingDate = item['場次'] || '';
-                    if (meetingDate === '12/24/2025') meetingDate = '20251224';
+                    // [修改區塊] 擴充日期正規化邏輯
+                    if (meetingDate === '12/24/2025' || meetingDate === '12/24') meetingDate = '20251224';
                     else if (meetingDate === '01/27/2026' || meetingDate === '1/27/2026') meetingDate = '20260127';
+                    else if (meetingDate === '04/21/2026' || meetingDate === '4/21/2026' || meetingDate === '04/21') meetingDate = '20260421';
+
+                    const proposer = item['提案者'] || '';
 
                     return {
                         date: meetingDate,
@@ -422,41 +389,32 @@
                         category: item['議題類別'] || item['序號類別'] || '未分類',
                         goal: item['具體目標'] || '',
                         proposer: proposer,
-                        dept: dept,
+                        dept: proposer.includes('/') ? proposer.split('/')[0] : proposer,
                         pic: item['負責單位'] || item['負責窗口'] || '',
-                        milestone: item['預計里程碑'] || '',
                         status: status,
                         progress: item['第一次追蹤摘要'] || item['追蹤報告'] || '',
-                        resolution: item['會議決議'] || item['會議/決議'] || '',
-                        submitDate: formatDate(item['提案日期'] || item['提獎日期']),
+                        resolution: item['會議決議'] || '',
+                        submitDate: formatDate(item['提案日期']),
                         deadline: formatDate(item['訂定完成期限']),
                         progressPercent: item['進度百分比'] || '',
                         track1Date: formatDate(item['第一次追蹤日期']),
                         track1Summary: item['第一次追蹤摘要'] || '',
-                        track2Date: formatDate(item['第二次追蹤/延期日期'] || item['第二次追蹤日期'] || item['第二次追蹤/延期/關閉日期']),
+                        track2Date: formatDate(item['第二次追蹤/延期日期']),
                         track2Summary: item['第二次追蹤摘要'] || '',
-                        track3Date: formatDate(item['第三次追蹤/延期日期'] || item['第三次追蹤日期']),
+                        track3Date: formatDate(item['第三次追蹤/延期日期']),
                         track3Summary: item['第三次追蹤摘要'] || '',
-                        updateDate: formatDate(item['第一次追蹤日期'] || item['追蹤日期']),
                         closeDate: formatDate(closeDateStr)
                     };
                 });
 
-                const getStatusWeight = (status) => {
-                    if (status.includes('待決議')) return 1;
-                    if (status.includes('進行中')) return 2;
-                    if (status.includes('已結案')) return 3;
-                    return 4;
-                };
-
+                const getStatusWeight = (s) => s.includes('待決議') ? 1 : s.includes('進行中') ? 2 : 3;
                 return mapped.sort((a, b) => getStatusWeight(a.status) - getStatusWeight(b.status));
             }, [data.tracking]);
 
             const overviewStats = useMemo(() => {
-                const total = trackingData.length;
-                const completed = trackingData.filter(i => i.status.includes('已結案')).length;
-                const inProgress = trackingData.filter(i => i.status.includes('進行中')).length;
-                const pending = trackingData.filter(i => i.status.includes('待決議')).length;
+                const completed = trackingData.filter(i => i.status === '已結案').length;
+                const inProgress = trackingData.filter(i => i.status === '進行中').length;
+                const pending = trackingData.filter(i => i.status === '待決議').length;
 
                 const pieData = [
                     { name: '已結案', value: completed, color: COLORS.secondary },
@@ -464,203 +422,156 @@
                     { name: '待決議', value: pending, color: COLORS.warning },
                 ].filter(d => d.value > 0);
 
-                const categoryCount = trackingData.reduce((acc, curr) => {
-                    const cat = curr.category || '未分類';
-                    acc[cat] = (acc[cat] || 0) + 1;
+                const catCount = trackingData.reduce((acc, curr) => {
+                    const c = curr.category || '未分類';
+                    acc[c] = (acc[c] || 0) + 1;
                     return acc;
                 }, {});
 
-                const barData = Object.keys(categoryCount).map(key => ({
-                    name: key, count: categoryCount[key]
-                }));
+                const barData = Object.keys(catCount).map(k => ({ name: k, count: catCount[k] }));
 
-                return { total, completed, inProgress, pending, pieData, barData };
+                return { total: trackingData.length, completed, inProgress, pending, pieData, barData };
             }, [trackingData]);
 
-            if (loading) return <div className="min-h-screen flex flex-col items-center justify-center space-y-4 bg-[#F5F5F3]"><div className="animate-spin text-slate-400"><Icons.Loader2 size={48} /></div><p className="text-xl text-slate-500 font-medium">即時資料同步中，請稍候...</p></div>;
-            if (error) return <div className="min-h-screen flex flex-col items-center justify-center space-y-4 bg-[#F5F5F3]"><div className="text-red-500"><Icons.AlertCircle size={48} /></div><h3 className="text-2xl font-bold text-slate-700">資料載入失敗</h3><p className="text-lg text-slate-500">{error}</p><button onClick={() => fetchData()} className="px-6 py-3 bg-slate-200 rounded-lg text-slate-600 hover:bg-slate-300 text-lg">重新嘗試</button></div>;
+            if (loading) return (
+                <div className="min-h-screen flex flex-col items-center justify-center space-y-4 bg-slate-50">
+                    <Icons.Loader2 className="animate-spin text-slate-400" size={48} />
+                    <p className="text-xl text-slate-500 font-medium">資料同步中...</p>
+                </div>
+            );
+
+            if (error) return (
+                <div className="min-h-screen flex flex-col items-center justify-center space-y-6 bg-slate-50 p-10 text-center">
+                    <Icons.AlertCircle className="text-red-400" />
+                    <h3 className="text-2xl font-bold">載入錯誤</h3>
+                    <p className="text-slate-500 max-w-md">{error}</p>
+                    <button onClick={() => fetchData()} className="px-6 py-3 bg-white border border-slate-200 rounded-xl shadow-sm hover:bg-slate-50 transition-all">重新嘗試</button>
+                </div>
+            );
 
             return (
-                <div className="min-h-screen font-sans bg-[#F5F5F3] flex flex-col">
-                    <nav className="bg-white border-b border-slate-200 px-8 py-5 flex flex-col md:flex-row justify-between items-center shadow-sm sticky top-0 z-20 gap-4">
+                <div className="min-h-screen font-sans bg-[#F5F5F3] flex flex-col pb-20">
+                    <nav className="bg-white/80 backdrop-blur-md border-b border-slate-200 px-8 py-5 flex flex-col md:flex-row justify-between items-center shadow-sm sticky top-0 z-50 gap-4">
                         <div className="flex items-center gap-4 w-full md:w-auto">
-                            <div className="p-3 rounded-lg text-white" style={{ backgroundColor: COLORS.primary }}><Icons.LayoutDashboard size={28} /></div>
+                            <div className="p-3 rounded-2xl text-white" style={{ backgroundColor: COLORS.primary }}><Icons.LayoutDashboard size={24} /></div>
                             <div>
-                                <h1 className="text-3xl font-bold tracking-tight" style={{ color: COLORS.text }}>住院醫師座談會</h1>
+                                <h1 className="text-2xl font-bold tracking-tight">住院醫師座談會</h1>
                                 <div className="flex items-center gap-2">
-                                    <p className="text-base text-slate-400">成效追蹤儀表板</p>
-                                    <div className="flex items-center gap-1 ml-4 text-xs font-medium text-blue-400">
-                                        {isRefreshing ? <Icons.RefreshCw size={12} className="animate-spin" /> : <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>}
-                                        {isRefreshing ? "同步中..." : `同步成功: ${lastUpdated}`}
+                                    <p className="text-sm text-slate-400">成效追蹤儀表板</p>
+                                    <div className="flex items-center gap-1.5 ml-4 text-xs font-bold text-blue-500 bg-blue-50 px-2 py-0.5 rounded">
+                                        {isRefreshing ? <Icons.RefreshCw size={10} className="animate-spin" /> : <div className="w-1.5 h-1.5 rounded-full bg-green-500 sync-pulse"></div>}
+                                        {isRefreshing ? "同步中" : `最後更新: ${lastUpdated}`}
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="flex flex-wrap gap-3 items-center w-full md:w-auto">
-                            <button 
-                                onClick={() => fetchData(true)} 
-                                disabled={isRefreshing}
-                                className={`p-3 rounded-lg border border-slate-200 hover:bg-slate-50 transition-all ${isRefreshing ? 'bg-blue-50 cursor-wait' : 'bg-white'}`}
-                                title="立刻強制重新整理 Sheet"
-                            >
-                                <Icons.RefreshCw size={20} className={isRefreshing ? "animate-spin text-blue-500" : "text-slate-500"} />
-                            </button>
-
-                            <div className="flex gap-3 bg-slate-100 p-1.5 rounded-lg flex-1 md:flex-none overflow-x-auto">
-                                <button onClick={() => setActiveTab('overview')} className={`flex-1 md:flex-none px-6 py-3 rounded-md text-lg font-medium whitespace-nowrap transition-all duration-200 ${activeTab === 'overview' ? 'bg-white shadow-sm text-slate-700' : 'text-slate-500 hover:text-slate-700'}`}>現況追蹤 (總覽)</button>
-                                {MEETINGS.map(m => (
-                                    <button key={m.id} onClick={() => setActiveTab(m.id)} className={`flex-1 md:flex-none px-6 py-3 rounded-md text-lg font-medium whitespace-nowrap transition-all duration-200 ${activeTab === m.id ? 'bg-white shadow-sm text-slate-700' : 'text-slate-500 hover:text-slate-700'}`}>{m.id}座談會</button>
-                                ))}
-                            </div>
+                        <div className="flex flex-wrap gap-2 items-center w-full md:w-auto">
+                            <button onClick={() => setActiveTab('overview')} className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'overview' ? 'bg-[#6B859E] text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>總覽</button>
+                            {MEETINGS.map(m => (
+                                <button key={m.id} onClick={() => setActiveTab(m.id)} className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === m.id ? 'bg-[#6B859E] text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>{m.id}</button>
+                            ))}
+                            <button onClick={() => fetchData(true)} disabled={isRefreshing} className="p-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-50"><Icons.RefreshCw size={18} className={isRefreshing ? 'animate-spin' : ''} /></button>
                         </div>
                     </nav>
 
-                    <main className="p-10 max-w-[95%] mx-auto space-y-10 flex-grow w-full">
+                    <main className="p-6 md:p-10 max-w-[1400px] mx-auto w-full flex-grow">
                         {activeTab === 'overview' && (
                             <div className="animate-fade-in space-y-8">
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                    <StatCard title="總提案數" value={overviewStats.total} icon={Icons.FileText} color={COLORS.primary} subtext="累計至目前所有場次" />
-                                    <StatCard title="已結案" value={overviewStats.completed} icon={Icons.CheckCircle2} color={COLORS.secondary} subtext="達成率追蹤" />
-                                    <StatCard title="進行中" value={overviewStats.inProgress} icon={Icons.Clock} color={COLORS.accent} subtext="按進度執行中" />
-                                    <StatCard title="待決議" value={overviewStats.pending} icon={Icons.HelpCircle} color={COLORS.warning} subtext="需跨部門協調" />
+                                    <StatCard title="總提案數" value={overviewStats.total} icon={Icons.FileText} color={COLORS.primary} subtext="累計各場次提案" />
+                                    <StatCard title="已完成" value={overviewStats.completed} icon={Icons.CheckCircle2} color={COLORS.secondary} subtext="結案達成率" />
+                                    <StatCard title="執行中" value={overviewStats.inProgress} icon={Icons.Clock} color={COLORS.accent} subtext="進行中案件" />
+                                    <StatCard title="待決議" value={overviewStats.pending} icon={Icons.HelpCircle} color={COLORS.warning} subtext="待追蹤案件" />
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                                        <h3 className="font-bold text-lg mb-4 flex items-center gap-2 text-slate-700"><Icons.Filter size={20} /> 案件狀態分佈</h3>
-                                        <div className="h-48 w-full">
+
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
+                                        <h3 className="font-bold text-lg mb-8 flex items-center gap-2"><Icons.Filter size={18} /> 案件執行現況</h3>
+                                        <div className="h-64">
                                             <ResponsiveContainer width="100%" height="100%">
                                                 <PieChart>
-                                                    <Pie
-                                                        data={overviewStats.pieData}
-                                                        innerRadius={50}
-                                                        outerRadius={70}
-                                                        paddingAngle={5}
-                                                        dataKey="value"
-                                                        label={({ name, value }) => `${name}: ${value}`}
-                                                        labelLine={{ strokeWidth: 1 }}
-                                                        style={{ fontSize: '14px', fontWeight: '500' }}
-                                                    >
-                                                        {overviewStats.pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+                                                    <Pie data={overviewStats.pieData} innerRadius={60} outerRadius={80} paddingAngle={8} dataKey="value" stroke="none" label={({ name, value }) => `${name}: ${value}`}>
+                                                        {overviewStats.pieData.map((e, i) => <Cell key={i} fill={e.color} />)}
                                                     </Pie>
                                                     <RechartsTooltip />
-                                                    <Legend verticalAlign="bottom" height={36} wrapperStyle={{ fontSize: '16px' }} />
+                                                    <Legend verticalAlign="bottom" />
                                                 </PieChart>
                                             </ResponsiveContainer>
                                         </div>
                                     </div>
-                                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                                        <h3 className="font-bold text-lg mb-4 flex items-center gap-2 text-slate-700"><Icons.LayoutDashboard size={20} /> 議題類別分析</h3>
-                                        <div className="h-48 w-full">
+                                    <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
+                                        <h3 className="font-bold text-lg mb-8 flex items-center gap-2"><Icons.LayoutDashboard size={18} /> 提案類別分析</h3>
+                                        <div className="h-64">
                                             <ResponsiveContainer width="100%" height="100%">
-                                                <BarChart data={overviewStats.barData} layout="vertical" margin={{ top: 5, right: 40, left: 40, bottom: 5 }}>
-                                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                                                <BarChart data={overviewStats.barData} layout="vertical" margin={{ left: 20 }}>
                                                     <XAxis type="number" hide />
-                                                    <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 14 }} />
+                                                    <YAxis dataKey="name" type="category" tick={{ fontSize: 12 }} width={80} />
                                                     <RechartsTooltip cursor={{ fill: 'transparent' }} />
-                                                    <Bar dataKey="count" fill={COLORS.primary} radius={[0, 6, 6, 0]} barSize={24}>
-                                                        <LabelList dataKey="count" position="right" fill="#666" fontSize={14} fontWeight="bold" />
+                                                    <Bar dataKey="count" fill={COLORS.primary} radius={[0, 8, 8, 0]} barSize={24}>
+                                                        <LabelList dataKey="count" position="right" style={{ fontSize: '12px', fontWeight: 'bold' }} />
                                                     </Bar>
                                                 </BarChart>
                                             </ResponsiveContainer>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                                    <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0">
-                                        <h3 className="font-bold text-2xl text-slate-700">全院議題追蹤清單</h3>
-                                        <div className={`flex items-center gap-2 text-sm px-4 py-2 rounded transition-colors ${isRefreshing ? 'text-blue-500 bg-blue-50' : 'text-slate-400 bg-slate-50'}`}>
-                                            {isRefreshing ? <Icons.RefreshCw size={14} className="animate-spin" /> : <div className="w-1.5 h-1.5 rounded-full bg-green-500 sync-pulse"></div>}
-                                            {isRefreshing ? "正在讀取 Sheet 最新內容..." : "已顯示 Sheet 最新進度"}
-                                        </div>
+
+                                <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+                                    <div className="p-8 border-b border-slate-100 bg-white flex justify-between items-center sticky top-0 z-20">
+                                        <h3 className="font-bold text-2xl">跨場次議題追蹤 Master List</h3>
+                                        <span className="text-xs font-bold text-slate-400 bg-slate-100 px-3 py-1 rounded-full">同步 Sheet 原始資料</span>
                                     </div>
-                                    {/* 新增/修改：加入 min-h-[400px] 確保當表格列數較少時，向上展開的 Tooltip 不會被此容器切斷 */}
-                                    <div className="overflow-x-auto min-h-[400px]">
+                                    <div className="overflow-x-auto custom-scrollbar min-h-[500px]">
                                         <table className="w-full text-left border-collapse">
-                                            <thead className="bg-slate-50 text-slate-600 text-sm tracking-wider sticky top-0 z-10">
+                                            <thead className="bg-slate-50 text-slate-400 text-xs font-bold uppercase tracking-wider sticky top-0 z-10">
                                                 <tr>
-                                                    <th className="p-3 font-bold w-12 text-center" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>場次</th>
-                                                    <th className="p-3 font-bold w-12 text-center" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>狀態</th>
-                                                    <th className="p-3 font-bold w-20 hidden lg:table-cell" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>提出科別</th>
-                                                    <th className="p-4 font-bold w-24 hidden lg:table-cell">議題類別</th>
-                                                    <th className="p-4 font-bold">具體目標</th>
-                                                    <th className="p-4 font-bold hidden md:table-cell" style={{ minWidth: '280px' }}>追蹤時間軸</th>
-                                                    <th className="p-4 font-bold w-24 hidden lg:table-cell">負責單位</th>
-                                                    <th className="p-4 font-bold hidden xl:table-cell" style={{ minWidth: '300px' }}>追蹤報告/會議決議</th>
+                                                    <th className="p-4 w-16 text-center">場次</th>
+                                                    <th className="p-4 w-24">狀態</th>
+                                                    <th className="p-4 w-32">科別</th>
+                                                    <th className="p-4">具體目標</th>
+                                                    <th className="p-4 w-64">追蹤時間軸</th>
+                                                    <th className="p-4 w-32">負責單位</th>
                                                 </tr>
                                             </thead>
-                                            <tbody className="divide-y divide-slate-100 text-base">
+                                            <tbody className="divide-y divide-slate-100 text-sm">
                                                 {trackingData.map((item, index) => {
-                                                    const timePoints = [
+                                                    const points = [
                                                         { label: '提案', date: item.submitDate, color: '#3b82f6', summary: '' },
-                                                        { label: '追蹤1', date: item.track1Date, color: '#f59e0b', summary: item.track1Summary || '' },
-                                                        { label: '追蹤2', date: item.track2Date, color: '#8b5cf6', summary: item.track2Summary || '' },
-                                                        { label: '追蹤3', date: item.track3Date, color: '#ec4899', summary: item.track3Summary || '' },
+                                                        { label: '追蹤1', date: item.track1Date, color: '#f59e0b', summary: item.track1Summary },
+                                                        { label: '追蹤2', date: item.track2Date, color: '#8b5cf6', summary: item.track2Summary },
+                                                        { label: '追蹤3', date: item.track3Date, color: '#ec4899', summary: item.track3Summary },
                                                         { label: '結案', date: item.closeDate, color: '#22c55e', summary: '' },
                                                     ].filter(p => p.date && p.date !== '');
 
                                                     return (
-                                                        <tr key={index} className="hover:bg-slate-50/50 transition-colors">
-                                                            <td className="p-3 align-top text-slate-600 font-medium text-sm text-center" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>{item.date}</td>
-                                                            <td className="p-3 align-top text-center"><StatusBadge status={item.status} /></td>
-                                                            <td className="p-3 align-top text-slate-600 hidden lg:table-cell text-sm" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>{item.dept}</td>
-                                                            <td className="p-4 align-top text-slate-500 hidden lg:table-cell">{item.category}</td>
-                                                            <td className="p-4 align-top">
-                                                                <div className="font-bold text-slate-800 leading-snug">{item.goal}</div>
-                                                                <div className="lg:hidden mt-2 text-sm text-slate-400">
-                                                                    <span>{item.dept}</span> · <span>{item.category}</span>
+                                                        <tr key={index} className="hover:bg-slate-50 transition-colors">
+                                                            <td className="p-4 text-center font-mono text-slate-500">{item.date}</td>
+                                                            <td className="p-4"><StatusBadge status={item.status} /></td>
+                                                            <td className="p-4 font-bold text-slate-600">{item.dept}</td>
+                                                            <td className="p-4"><p className="font-bold text-slate-800 line-clamp-2" title={item.goal}>{item.goal}</p></td>
+                                                            <td className="p-4">
+                                                                <div className="flex items-center gap-1">
+                                                                    {points.map((p, i) => (
+                                                                        <div key={i} className="group relative tooltip-container">
+                                                                            <div className="w-3 h-3 rounded-full shadow-sm cursor-help hover:scale-125 transition-transform" style={{ backgroundColor: p.color }}></div>
+                                                                            {p.summary && (
+                                                                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 hidden group-hover:block z-50 pointer-events-none w-max min-w-[260px] max-w-[340px]">
+                                                                                    <div className="bg-slate-800 text-white rounded-2xl p-5 shadow-2xl break-words leading-relaxed border border-slate-700/50">
+                                                                                        <div className="flex items-center gap-2 font-bold mb-2" style={{ color: p.color }}>
+                                                                                            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: p.color }}></span>
+                                                                                            {p.label} <span className="text-slate-400 font-normal ml-auto">{p.date}</span>
+                                                                                        </div>
+                                                                                        <div className="border-t border-slate-700 pt-3 text-slate-100 text-sm">{p.summary}</div>
+                                                                                    </div>
+                                                                                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-800"></div>
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    ))}
                                                                 </div>
                                                             </td>
-                                                            <td className="p-4 align-top hidden md:table-cell" style={{ minWidth: '280px' }}>
-                                                                {timePoints.length > 0 ? (
-                                                                    <div className="flex items-start gap-0">
-                                                                        {timePoints.map((point, idx) => (
-                                                                            <div key={idx} className="flex items-center group relative">
-                                                                                <div className="flex flex-col items-center min-w-[50px] cursor-pointer">
-                                                                                    <div
-                                                                                        className="w-3 h-3 rounded-full flex-shrink-0 shadow-sm hover:scale-150 transition-transform"
-                                                                                        style={{ backgroundColor: point.color }}
-                                                                                        title={point.summary ? `${point.label}\n${point.date}\n${point.summary}` : `${point.label}: ${point.date}`}
-                                                                                    />
-                                                                                    <span className="text-[10px] text-slate-500 mt-1 font-medium">{point.label}</span>
-                                                                                    <span className="text-[10px] text-slate-400">{point.date}</span>
-                                                                                </div>
-                                                                                {point.summary && (
-                                                                                    /* 新增/修改：大幅優化 Tooltip 的寬度 (min-w-[240px] max-w-[320px])、Padding (p-4) 與文字自動換行 (break-words leading-relaxed)，解決文字底部被切斷問題 */
-                                                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 hidden group-hover:block z-[100] pointer-events-none w-max min-w-[240px] max-w-[320px]">
-                                                                                        <div className="bg-slate-800 text-white text-[13px] rounded-xl p-4 shadow-2xl whitespace-pre-wrap break-words leading-relaxed border border-slate-700/80">
-                                                                                            <div className="font-bold mb-2 flex items-center gap-2" style={{ color: point.color || '#fbbf24' }}>
-                                                                                                <span className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: point.color || '#fbbf24' }}></span>
-                                                                                                {point.label}
-                                                                                            </div>
-                                                                                            <div className="text-slate-300 mb-2.5 font-mono text-xs bg-slate-900/60 inline-block px-2.5 py-1 rounded-md border border-slate-700/50">
-                                                                                                {point.date}
-                                                                                            </div>
-                                                                                            <div className="border-t border-slate-600/80 pt-3 mt-1 text-slate-100 text-left">
-                                                                                                {point.summary}
-                                                                                            </div>
-                                                                                        </div>
-                                                                                        {/* 加大倒三角形使其與新尺寸更搭配 */}
-                                                                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-800"></div>
-                                                                                    </div>
-                                                                                )}
-                                                                                {idx < timePoints.length - 1 && (
-                                                                                    <div className="w-4 h-0.5 bg-slate-300 -mt-4"></div>
-                                                                                )}
-                                                                            </div>
-                                                                        ))}
-                                                                    </div>
-                                                                ) : (
-                                                                    <span className="text-sm text-slate-400">尚無追蹤紀錄</span>
-                                                                )}
-                                                            </td>
-                                                            <td className="p-4 align-top text-slate-600 text-sm hidden lg:table-cell">
-                                                                {item.pic && <span className="font-medium">{item.pic}</span>}
-                                                            </td>
-                                                            <td className="p-4 align-top text-slate-600 text-sm hidden xl:table-cell" style={{ minWidth: '300px', maxWidth: '400px' }}>
-                                                                {item.progress && <div className="mb-2 whitespace-pre-wrap"><span className="font-semibold text-slate-700">追蹤:</span> {item.progress}</div>}
-                                                                {item.resolution && <div className="text-slate-500 whitespace-pre-wrap"><span className="font-semibold">決議:</span> {item.resolution}</div>}
-                                                            </td>
+                                                            <td className="p-4 text-slate-500 font-medium">{item.pic || '-'}</td>
                                                         </tr>
                                                     );
                                                 })}
@@ -673,22 +584,18 @@
 
                         {MEETINGS.map(m => (
                             activeTab === m.id && (
-                                <MeetingPage
-                                    key={m.id}
-                                    meeting={m}
-                                    trackingData={trackingData}
-                                    attendanceData={data.attendance || []}
-                                />
+                                <MeetingPage key={m.id} meeting={m} trackingData={trackingData} attendanceData={data.attendance || []} />
                             )
                         ))}
                     </main>
 
-                    <footer className="bg-white border-t border-slate-200 py-6">
-                        <div className="max-w-[95%] mx-auto flex justify-between items-center text-slate-400 text-base font-medium px-4">
-                            <div>教學部 住院醫師組</div>
-                            <div className="text-sm text-slate-300 flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 rounded-full bg-blue-400"></div>
-                                每 60 秒與雲端同步一次
+                    <footer className="bg-white border-t border-slate-200 py-8 text-center text-slate-400 text-sm">
+                        <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row justify-between items-center px-10 gap-4">
+                            <p>© 2026 教學部 住院醫師組 · 智慧決議追蹤系統</p>
+                            <div className="flex items-center gap-3 text-slate-300">
+                                <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-blue-400"></div> 每 60s 自動同步</span>
+                                <span>|</span>
+                                <span>系統版本 v4.3.0</span>
                             </div>
                         </div>
                     </footer>
