@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -12,15 +13,15 @@
                 extend: {
                     colors: {
                         morandi: {
-                            bg: '#F5F5F3',       // 淺米灰背景
-                            card: '#FFFFFF',     // 純白卡片
-                            primary: '#7A8B99',  // 莫蘭迪藍灰 (主色 - 專業/信任)
-                            secondary: '#A6B1A1',// 莫蘭迪綠 (輔色 - 成長/舒適)
-                            accent: '#C5B4A1',   // 莫蘭迪暖棕 (強調 - 溫度)
-                            text: '#4A4F55',     // 深灰文字
-                            lightText: '#8C9299',// 淺灰文字
-                            border: '#E0E0E0',   // 邊框
-                            inputBg: '#F9F9F9'   // 輸入框背景
+                            bg: '#F5F5F3',
+                            card: '#FFFFFF',
+                            primary: '#7A8B99',
+                            secondary: '#A6B1A1',
+                            accent: '#C5B4A1',
+                            text: '#4A4F55',
+                            lightText: '#8C9299',
+                            border: '#E0E0E0',
+                            inputBg: '#F9F9F9'
                         }
                     },
                     fontFamily: {
@@ -39,27 +40,16 @@
             color: #4A4F55;
         }
         
-        /* 自定義滾動條 */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #F5F5F3; 
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #D1D5DB; 
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #9CA3AF; 
-        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #F5F5F3; }
+        ::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #9CA3AF; }
 
         .input-focus-ring:focus-within {
             box-shadow: 0 0 0 2px rgba(122, 139, 153, 0.3);
             border-color: #7A8B99;
         }
 
-        /* Loading Spinner */
         .loader {
             border: 3px solid #f3f3f3;
             border-radius: 50%;
@@ -78,10 +68,9 @@
 </head>
 <body class="antialiased min-h-screen py-8 px-4 sm:px-6 lg:px-8 selection:bg-morandi-primary selection:text-white">
 
-    <!-- Main Container -->
     <div class="max-w-3xl mx-auto bg-morandi-card rounded-2xl shadow-xl overflow-hidden border border-morandi-border/50">
         
-        <!-- Header Image / Banner Area -->
+        <!-- Header -->
         <div class="bg-gradient-to-r from-[#8E9EAB] to-[#ADC2B4] h-32 sm:h-40 relative flex items-center justify-center">
             <div class="absolute inset-0 bg-black/10"></div>
             <div class="relative z-10 text-center text-white px-4">
@@ -90,14 +79,14 @@
             </div>
         </div>
 
-        <!-- Introduction Section -->
+        <!-- Introduction -->
         <div class="p-8 sm:p-10 border-b border-morandi-border">
             <div class="prose prose-slate max-w-none text-morandi-text">
                 <p class="mb-4 leading-relaxed">
-                    <span class="font-medium text-morandi-primary">各位麻醉部、家庭醫學部、放射腫瘤部與耳鼻喉部的夥伴們，大家好：</span>
+                    <span class="font-medium text-morandi-primary">各位外科部夥伴們（含一般及消化系外科、神經外科、泌尿外科、整形外科、胸腔外科、心臟血管外科），大家好：</span>
                 </p>
                 <p class="mb-6 text-sm sm:text-base leading-relaxed text-justify">
-                    平時忙於臨床與學習，辛苦了！為了更貼近大家的訓練需求，並持續優化教學與工作環境，教學部特別舉辦本次「住院醫師座談餐會」。這是一場輕鬆的午餐約會，我們邀請了副院長與各級主管列席，希望能直接聽聽大家在臨床現場的真實想法，與我們共同建立更好的學習生態。
+                    平時忙於臨床與學習，辛苦了！為了更貼近大家的訓練需求，並持續優化教學與工作環境，教學部特別舉辦本次「住院醫師座談餐會」。這是一場輕鬆的午餐約會，本次由<strong>陳志偉主任</strong>主持，並邀請<strong>陳志成副院長、鄭天浚副院長</strong>蒞臨指導，希望能直接聽聽大家在臨床現場的真實想法，與我們共同建立更好的學習生態。
                 </p>
                 
                 <div class="bg-[#F0F4F5] border-l-4 border-morandi-primary p-4 rounded-r-lg my-6">
@@ -117,7 +106,8 @@
                         </div>
                         <div>
                             <span class="block text-xs text-gray-400">時間</span>
-                            <span class="font-medium">115年 01月 27日 (二) 12:00</span>
+                            <span class="font-medium">115年 05月 27日 (三) 12:30</span>
+                            <span class="block text-xs text-gray-400 mt-0.5">（12:00 始提供餐食）</span>
                         </div>
                     </div>
                     <div class="flex items-center space-x-3 text-sm">
@@ -126,7 +116,7 @@
                         </div>
                         <div>
                             <span class="block text-xs text-gray-400">地點</span>
-                            <span class="font-medium">563 會議室</span>
+                            <span class="font-medium">白宮 VIP 貴賓室</span>
                         </div>
                     </div>
                     <div class="flex items-center space-x-3 text-sm">
@@ -135,7 +125,7 @@
                         </div>
                         <div>
                             <span class="block text-xs text-gray-400">截止日期</span>
-                            <span class="font-medium text-red-400">請於 1/25 (日) 前完成回覆</span>
+                            <span class="font-medium text-red-400">請於 5/21 (四) 前完成回覆</span>
                         </div>
                     </div>
                      <div class="flex items-center space-x-3 text-sm cursor-pointer hover:opacity-80 transition-opacity" onclick="addToCalendar()">
@@ -148,6 +138,21 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- 主管列席資訊 -->
+                <details class="mt-6 bg-gray-50 rounded-lg border border-gray-200 group">
+                    <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-gray-700 hover:text-morandi-primary flex items-center justify-between">
+                        <span><i class="fas fa-user-tie mr-2 text-morandi-primary"></i>會議列席長官與主管</span>
+                        <i class="fas fa-chevron-down text-xs group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <div class="px-4 pb-4 text-sm text-gray-600 space-y-1.5">
+                        <p><span class="text-gray-400 inline-block w-20">主席</span>陳志偉 主任</p>
+                        <p><span class="text-gray-400 inline-block w-20">指導長官</span>陳志成 副院長、鄭天浚 副院長</p>
+                        <p><span class="text-gray-400 inline-block w-20">教學主管</span>劉雯 副部長</p>
+                        <p><span class="text-gray-400 inline-block w-20">列席主管</span>杜漢祥 部長</p>
+                        <p><span class="text-gray-400 inline-block w-20">教學負責人</span>陳明鎮 部長、黃冠華 副部長</p>
+                    </div>
+                </details>
             </div>
         </div>
 
@@ -174,11 +179,14 @@
                         <div class="relative">
                             <select id="department" name="department" required
                                 class="w-full px-4 py-3 bg-morandi-inputBg border border-gray-200 rounded-lg appearance-none focus:outline-none focus:border-morandi-primary focus:ring-1 focus:ring-morandi-primary transition-all cursor-pointer">
-                                <option value="" disabled selected>請選擇您所屬的部門</option>
-                                <option value="麻醉部">麻醉部</option>
-                                <option value="家庭醫學部">家庭醫學部</option>
-                                <option value="放射腫瘤部">放射腫瘤部</option>
-                                <option value="耳鼻喉部">耳鼻喉部</option>
+                                <option value="" disabled selected>請選擇您所屬的科別</option>
+                                <option value="外科部">外科部</option>
+                                <option value="一般及消化系外科">一般及消化系外科</option>
+                                <option value="神經外科">神經外科</option>
+                                <option value="泌尿外科">泌尿外科</option>
+                                <option value="整形外科">整形外科</option>
+                                <option value="胸腔外科">胸腔外科</option>
+                                <option value="心臟血管外科">心臟血管外科</option>
                             </select>
                             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
                                 <i class="fas fa-chevron-down text-xs"></i>
@@ -199,7 +207,7 @@
 
                 <div class="space-y-6 pl-0 md:pl-11">
                     <div>
-                        <label class="block text-sm font-medium text-gray-600 mb-3">請問您是否出席 1/27 座談餐會？ <span class="text-red-400">*</span></label>
+                        <label class="block text-sm font-medium text-gray-600 mb-3">請問您是否出席 5/27 座談餐會？ <span class="text-red-400">*</span></label>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <label class="relative flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors input-focus-ring">
                                 <input type="radio" name="attendance" value="yes" class="h-4 w-4 text-morandi-primary border-gray-300 focus:ring-morandi-primary" required onclick="toggleSections(true)">
@@ -262,7 +270,6 @@
                     </p>
 
                     <div class="grid grid-cols-1 gap-6 pl-0 md:pl-11">
-                        <!-- Problem -->
                         <div class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm relative group focus-within:ring-1 focus-within:ring-morandi-accent/50 transition-all">
                             <div class="absolute top-0 left-0 w-1 h-full bg-red-300 rounded-l-lg group-hover:bg-red-400 transition-colors"></div>
                             <label for="problem" class="block text-sm font-bold text-gray-700 mb-2 flex items-center">
@@ -275,14 +282,12 @@
                                 placeholder="請在此描述具體問題..."></textarea>
                         </div>
 
-                        <!-- Arrow Indicator -->
                         <div class="flex justify-center -my-3 z-10">
                             <div class="bg-morandi-bg text-gray-400 rounded-full p-1 border border-gray-200">
                                 <i class="fas fa-arrow-down"></i>
                             </div>
                         </div>
 
-                        <!-- Solution -->
                         <div class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm relative group focus-within:ring-1 focus-within:ring-morandi-secondary/50 transition-all">
                             <div class="absolute top-0 left-0 w-1 h-full bg-green-300 rounded-l-lg group-hover:bg-green-400 transition-colors"></div>
                             <label for="solution" class="block text-sm font-bold text-gray-700 mb-2 flex items-center">
@@ -525,11 +530,11 @@
 
         function addToCalendar() {
             const eventDetails = {
-                title: '115年度住院醫師座談餐會',
-                start: '20260127T120000',
-                end: '20260127T133000',
-                location: '563會議室',
-                details: '午餐交流｜聽見您的聲音。出席者：陳志成副院長、郭行道副院長等。'
+                title: '115年度住院醫師座談餐會 (外科部)',
+                start: '20260527T123000',
+                end: '20260527T140000',
+                location: '白宮VIP貴賓室',
+                details: '午餐交流｜聽見您的聲音。\\n12:00 始提供餐食，12:30 正式開始。\\n主席：陳志偉主任；指導長官：陳志成副院長、鄭天浚副院長。'
             };
             const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(eventDetails.title)}&dates=${eventDetails.start}/${eventDetails.end}&details=${encodeURIComponent(eventDetails.details)}&location=${encodeURIComponent(eventDetails.location)}`;
             window.open(googleCalendarUrl, '_blank');
