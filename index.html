@@ -75,13 +75,17 @@
 
         // --- 設定與常數 ---
         const API_URL = "https://script.google.com/macros/s/AKfycbwp8wbNQaU0J9SQX6r1EUdhuAvnfDgsyfSXkIjtOHtGeXgu8hSN5_jKQ9_WqpFbvhkR9g/exec";
+        // 照片來源：GitHub Raw 絕對路徑（無論本機開啟或部署於 GitHub Pages 皆可正常顯示）
+        const PHOTO_BASE = "https://raw.githubusercontent.com/b20434/RMeeting/main/";
         // 更新頻率為 1 分鐘
         const REFRESH_INTERVAL = 60000; 
 
         const MEETINGS = [
             { id: '20251224', date: '2025/12/24', displayDate: '2025年12月24日 (週三)', time: '12:00', location: '554會議室', dateFilter: ['12/24/2025', '2025/12/24', '2025-12-24', '12/24'], photos: ['photos/20251224_01.jpg', 'photos/20251224_02.jpg', 'photos/20251224_03.jpg', 'photos/20251224_04.jpg'] },
             { id: '20260127', date: '2026/01/27', displayDate: '2026年01月27日 (週一)', time: '12:00', location: '563會議室', dateFilter: ['01/27/2026', '1/27/2026', '2026/01/27', '2026-01-27', '01/27', '1/27'], photos: ['photos/20260127_01.jpg', 'photos/20260127_02.jpg', 'photos/20260127_03.jpg', 'photos/20260127_04.jpg', 'photos/20260127_05.jpg'] },
-            { id: '20260421', date: '2026/04/21', displayDate: '2026年04月21日 (週二)', time: '12:30', location: '5F外科討論室', dateFilter: ['04/21/2026', '4/21/2026', '2026/04/21', '2026-04-21', '04/21', '4/21'], photos: ['photos/20260421_01.jpg', 'photos/20260421_02.jpg', 'photos/20260421_03.jpg', 'photos/20260421_04.jpg', 'photos/20260421_05.jpg'] }
+            { id: '20260421', date: '2026/04/21', displayDate: '2026年04月21日 (週二)', time: '12:30', location: '5F外科討論室', dateFilter: ['04/21/2026', '4/21/2026', '2026/04/21', '2026-04-21', '04/21', '4/21'], photos: ['photos/20260421_01.jpg', 'photos/20260421_02.jpg', 'photos/20260421_03.jpg', 'photos/20260421_04.jpg', 'photos/20260421_05.jpg'] },
+            { id: '20260527', date: '2026/05/27', displayDate: '2026年05月27日 (週三)', time: '12:30', location: '白宮貴賓室', dateFilter: ['05/27/2026', '5/27/2026', '2026/05/27', '2026-05-27', '05/27', '5/27'], photos: ['photos/20260527_01.JPG', 'photos/20260527_02.JPG', 'photos/20260527_03.JPG', 'photos/20260527_04.JPG', 'photos/20260527_05.JPG'] },
+            { id: '20260603', date: '2026/06/03', displayDate: '2026年06月03日 (週三)', time: '12:30', location: '5樓外科空橋討論室', dateFilter: ['06/03/2026', '6/3/2026', '6/03/2026', '2026/06/03', '2026-06-03', '06/03', '6/3'], photos: ['photos/20260603_01.JPG', 'photos/20260603_02.JPG', 'photos/20260603_03.JPG', 'photos/20260603_04.JPG'] }
         ];
 
         const COLORS = {
@@ -92,6 +96,65 @@
         const RESIDENT_KEYWORDS = ['住院醫師', 'R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8', 'R9',
             'LR1', 'LR2', 'LR3', 'LR4', 'LR5', '總醫師', 'CR', '研究員', '代理總醫師'];
 
+        // --- 本地出席名單（依紙本簽到表補登，若雲端 Sheet 已有同名同場次資料則自動略過不重複計算） ---
+        const LOCAL_ATTENDANCE = [
+            // === 20260527 外科住院醫師座談會（白宮貴賓室） ===
+            { '場次': '05/27/2026', '姓名': '陳志成', '科別名': '院長室', '職稱': '副院長', '職級': '指導長官' },
+            { '場次': '05/27/2026', '姓名': '鄭天浚', '科別名': '院長室', '職稱': '副院長', '職級': '指導長官' },
+            { '場次': '05/27/2026', '姓名': '陳志偉', '科別名': '神經外科', '職稱': '次專科主任', '職級': '主席' },
+            { '場次': '05/27/2026', '姓名': '杜漢祥', '科別名': '品質管理部', '職稱': '部長', '職級': '列席主管' },
+            { '場次': '05/27/2026', '姓名': '蘇慧真', '科別名': '藥劑部', '職稱': '部長', '職級': '教學主管' },
+            { '場次': '05/27/2026', '姓名': '劉雯', '科別名': '教學部', '職稱': '副部長', '職級': '教學主管' },
+            { '場次': '05/27/2026', '姓名': '陳俊嘉', '科別名': '整形外科', '職稱': '次專科主任', '職級': '列席主管' },
+            { '場次': '05/27/2026', '姓名': '陳佳蓉', '科別名': '資訊室-行政組', '職稱': '組長', '職級': '列席主管' },
+            { '場次': '05/27/2026', '姓名': '林仁傑', '科別名': '外科部', '職稱': '住院醫師(LR1)', '職級': '住院醫師' },
+            { '場次': '05/27/2026', '姓名': '曾華緯', '科別名': '外科部', '職稱': '住院醫師(LR2)', '職級': '住院醫師' },
+            { '場次': '05/27/2026', '姓名': '謝和桐', '科別名': '外科部', '職稱': '住院醫師(LR2)', '職級': '住院醫師' },
+            { '場次': '05/27/2026', '姓名': '鄭宛妤', '科別名': '外科部', '職稱': '住院醫師(LR2)', '職級': '住院醫師' },
+            { '場次': '05/27/2026', '姓名': '李翎嘉', '科別名': '外科部', '職稱': '住院醫師(LR2)', '職級': '住院醫師' },
+            { '場次': '05/27/2026', '姓名': '趙育慈', '科別名': '一般及消化系外科', '職稱': '住院醫師(LR3)', '職級': '住院醫師' },
+            { '場次': '05/27/2026', '姓名': '周泳源', '科別名': '一般及消化系外科', '職稱': '住院醫師(LR3)', '職級': '住院醫師' },
+            { '場次': '05/27/2026', '姓名': '李承霖', '科別名': '一般及消化系外科', '職稱': '住院醫師(LR3)', '職級': '住院醫師' },
+            { '場次': '05/27/2026', '姓名': '黃柏諺', '科別名': '一般及消化系外科', '職稱': '住院醫師(LR4)', '職級': '住院醫師' },
+            { '場次': '05/27/2026', '姓名': '謝佑樁', '科別名': '一般及消化系外科', '職稱': '住院醫師(LR4)', '職級': '住院醫師' },
+            { '場次': '05/27/2026', '姓名': '李宗儒', '科別名': '一般及消化系外科', '職稱': 'CR(總醫師R5)', '職級': '住院醫師' },
+            { '場次': '05/27/2026', '姓名': '陳佑潤', '科別名': '一般及消化系外科', '職稱': 'CR(總醫師R5)', '職級': '住院醫師' },
+            { '場次': '05/27/2026', '姓名': '單學謙', '科別名': '一般及消化系外科', '職稱': '住院醫師(R5)', '職級': '住院醫師' },
+            { '場次': '05/27/2026', '姓名': '周瑛喬', '科別名': '一般及消化系外科', '職稱': '住院醫師(R6)', '職級': '住院醫師' },
+            { '場次': '05/27/2026', '姓名': '温家鳴', '科別名': '一般及消化系外科', '職稱': '住院醫師(R6)', '職級': '住院醫師' },
+            { '場次': '05/27/2026', '姓名': '蔡孟韋', '科別名': '神經外科', '職稱': '住院醫師(LR4)', '職級': '住院醫師' },
+            { '場次': '05/27/2026', '姓名': '陳昱廷', '科別名': '神經外科', '職稱': '研究員(LR7)', '職級': '住院醫師' },
+            { '場次': '05/27/2026', '姓名': '陳正宇', '科別名': '泌尿外科', '職稱': 'CR(總醫師LR3)', '職級': '住院醫師' },
+            { '場次': '05/27/2026', '姓名': '江亭易', '科別名': '泌尿外科', '職稱': '住院醫師(LR3)', '職級': '住院醫師' },
+            { '場次': '05/27/2026', '姓名': '謝佳騂', '科別名': '泌尿外科', '職稱': '住院醫師(LR4)', '職級': '住院醫師' },
+            { '場次': '05/27/2026', '姓名': '蔡勝閔', '科別名': '泌尿外科', '職稱': 'CR(總醫師LR6)', '職級': '住院醫師' },
+            { '場次': '05/27/2026', '姓名': '王煥凱', '科別名': '泌尿外科', '職稱': '住院醫師(R6)', '職級': '住院醫師' },
+            { '場次': '05/27/2026', '姓名': '鄭岳航', '科別名': '整形外科', '職稱': 'CR(總醫師LR5)', '職級': '住院醫師' },
+            { '場次': '05/27/2026', '姓名': '蔡承霖', '科別名': '整形外科', '職稱': '研究員(LR6)', '職級': '住院醫師' },
+            { '場次': '05/27/2026', '姓名': '林淑雅', '科別名': '教學部', '職稱': '教學行政管理員', '職級': '教學負責人' },
+            // === 20260603 住院醫師座談會（5樓外科空橋討論室） ===
+            { '場次': '06/03/2026', '姓名': '陳志成', '科別名': '院長室', '職稱': '副院長', '職級': '指導長官' },
+            { '場次': '06/03/2026', '姓名': '鄭天浚', '科別名': '院長室', '職稱': '副院長', '職級': '指導長官' },
+            { '場次': '06/03/2026', '姓名': '陳鋭溢', '科別名': '腎臟科', '職稱': '主治醫師', '職級': '主席' },
+            { '場次': '06/03/2026', '姓名': '蘇慧真', '科別名': '藥劑部', '職稱': '部長', '職級': '教學主管' },
+            { '場次': '06/03/2026', '姓名': '杜漢祥', '科別名': '品質管理部', '職稱': '部長', '職級': '列席主管' },
+            { '場次': '06/03/2026', '姓名': '劉雯', '科別名': '教學部', '職稱': '副部長', '職級': '教學主管' },
+            { '場次': '06/03/2026', '姓名': '林昇輝', '科別名': '運動傷害科', '職稱': '次專科主任', '職級': '列席主管' },
+            { '場次': '06/03/2026', '姓名': '王嘉地', '科別名': '觀察醫學科', '職稱': '次專科主任', '職級': '列席主管' },
+            { '場次': '06/03/2026', '姓名': '柯景中', '科別名': '放射診斷科', '職稱': '主治醫師', '職級': '列席主管' },
+            { '場次': '06/03/2026', '姓名': '謝奇錕', '科別名': '骨科部', '職稱': '資深研究員(R6)', '職級': '住院醫師' },
+            { '場次': '06/03/2026', '姓名': '蔡佩軒', '科別名': '放射診斷科', '職稱': '住院醫師(LR3)', '職級': '住院醫師' },
+            { '場次': '06/03/2026', '姓名': '吳宜蓁', '科別名': '放射診斷科', '職稱': '住院醫師(LR3)', '職級': '住院醫師' },
+            { '場次': '06/03/2026', '姓名': '徐浩評', '科別名': '放射診斷科', '職稱': '住院醫師(LR2)', '職級': '住院醫師' },
+            { '場次': '06/03/2026', '姓名': '楊鎧輿', '科別名': '放射診斷科', '職稱': 'CR(總醫師LR4)', '職級': '住院醫師' },
+            { '場次': '06/03/2026', '姓名': '陳佳珞', '科別名': '放射診斷科', '職稱': '住院醫師(LR1)', '職級': '住院醫師' },
+            { '場次': '06/03/2026', '姓名': '方昱翔', '科別名': '放射診斷科', '職稱': '住院醫師(LR3)', '職級': '住院醫師' },
+            { '場次': '06/03/2026', '姓名': '江秉鴻', '科別名': '放射診斷科', '職稱': '住院醫師(LR2)', '職級': '住院醫師' },
+            { '場次': '06/03/2026', '姓名': '陳勇叡', '科別名': '急診醫學部', '職稱': '住院醫師(LR2)', '職級': '住院醫師' },
+            { '場次': '06/03/2026', '姓名': '嚴一', '科別名': '急診醫學部', '職稱': '住院醫師(LR1)', '職級': '住院醫師' },
+            { '場次': '06/03/2026', '姓名': '林淑雅', '科別名': '教學部', '職稱': '教學行政管理員', '職級': '教學負責人' },
+        ];
+
         const formatDate = (dateStr) => {
             if (!dateStr) return '';
             if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateStr)) return dateStr;
@@ -101,6 +164,62 @@
             const day = String(date.getDate()).padStart(2, '0');
             const year = date.getFullYear();
             return `${month}/${day}/${year}`;
+        };
+
+        // 已知座談會場次 ID 集合（供 normalizeMeetingId 校驗月/日是否被顛倒）
+        const KNOWN_MEETING_IDS = new Set(['20251224', '20260127', '20260421', '20260527', '20260603']);
+
+        // 場次智慧解析：不論 Sheet 填 12/24/2025、2026/6/3、2026-06-03 或日期儲存格(ISO字串)，一律轉為 YYYYMMDD 場次 ID
+        const normalizeMeetingId = (raw) => {
+            if (raw === null || raw === undefined) return '';
+            // 清除各種隱藏/干擾字元：不換行空格、零寬字元、換行、全形數字轉半形
+            let s = String(raw)
+                .replace(/[\u00a0\u200b-\u200d\uFEFF]/g, '')  // NBSP、零寬空格
+                .replace(/[\r\n\t]/g, ' ')
+                .replace(/[０-９]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0))  // 全形數字
+                .trim();
+            if (!s) return '';
+            if (/^20\d{6}$/.test(s)) return s; // 已是 8 碼場次 ID
+
+            const build = (y, m, d) => `${y}${String(m).padStart(2, '0')}${String(d).padStart(2, '0')}`;
+
+            // ISO 日期時間字串（Google Sheet 日期儲存格經 API 回傳的格式），以台灣時區 (+8) 校正
+            if (/^\d{4}-\d{2}-\d{2}T/.test(s)) {
+                const dt = new Date(s);
+                if (!isNaN(dt.getTime())) {
+                    const tw = new Date(dt.getTime() + 8 * 60 * 60 * 1000);
+                    return build(tw.getUTCFullYear(), tw.getUTCMonth() + 1, tw.getUTCDate());
+                }
+            }
+
+            const ymd = s.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/); // YYYY/M/D
+            const dmy = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/); // A/B/YYYY（A、B 可能是 月/日 或 日/月）
+
+            if (ymd) {
+                const y = ymd[1], a = parseInt(ymd[2], 10), b = parseInt(ymd[3], 10);
+                const primary = build(y, a, b);
+                if (KNOWN_MEETING_IDS.has(primary)) return primary;
+                const swapped = build(y, b, a);           // 嘗試對調（防 M/D 與 D/M 顛倒）
+                if (KNOWN_MEETING_IDS.has(swapped)) return swapped;
+                return primary;
+            }
+            if (dmy) {
+                const y = dmy[3], a = parseInt(dmy[1], 10), b = parseInt(dmy[2], 10);
+                const asMDY = build(y, a, b);             // 視為 MM/DD/YYYY
+                if (KNOWN_MEETING_IDS.has(asMDY)) return asMDY;
+                const asDMY = build(y, b, a);             // 視為 DD/MM/YYYY
+                if (KNOWN_MEETING_IDS.has(asDMY)) return asDMY;
+                return asMDY;
+            }
+
+            const parsed = new Date(s);
+            if (isNaN(parsed.getTime())) return s;
+            const y = parsed.getFullYear(), m = parsed.getMonth() + 1, d = parsed.getDate();
+            const primary = build(y, m, d);
+            if (KNOWN_MEETING_IDS.has(primary)) return primary;
+            const swapped = build(y, d, m);  // 月日對調（防 Sheet 地區設定把 6/3 誤存成 3/6）
+            if (KNOWN_MEETING_IDS.has(swapped)) return swapped;
+            return primary;
         };
 
         const Icons = {
@@ -215,9 +334,11 @@
             }, [trackingData, meeting]);
 
             const meetingAttendance = useMemo(() => {
-                return attendanceData.filter(person =>
-                    meeting.dateFilter.some(df => (person['場次'] || '').includes(df))
-                );
+                return attendanceData.filter(person => {
+                    const raw = person['場次'] || '';
+                    if (normalizeMeetingId(raw) === meeting.id) return true; // 智慧解析（含日期儲存格）
+                    return meeting.dateFilter.some(df => raw.includes(df)); // 保留原字串包含比對作為後備
+                });
             }, [attendanceData, meeting]);
 
             const stats = useMemo(() => {
@@ -319,6 +440,19 @@
                                 <div className="col-span-2 text-center py-12 text-slate-400">
                                     <Icons.FileText size={48} className="mx-auto mb-4 opacity-50" />
                                     <p className="text-xl">此場次尚無議題資料</p>
+                                    {trackingData.length > 0 && (
+                                        <details className="mt-6 text-left max-w-xl mx-auto text-xs">
+                                            <summary className="cursor-pointer text-slate-400 hover:text-slate-600">診斷資訊（若議題應存在卻未顯示，請點此展開檢查場次對應）</summary>
+                                            <div className="mt-3 bg-slate-50 border border-slate-200 rounded-lg p-4 font-mono space-y-1 max-h-64 overflow-auto">
+                                                <div className="text-slate-500 mb-2">本頁場次 ID：<span className="text-slate-800">{meeting.id}</span></div>
+                                                {trackingData.map((it, i) => (
+                                                    <div key={i} className={it.date === meeting.id ? 'text-green-600' : 'text-slate-400'}>
+                                                        序號 {it.id || '?'}：原始場次「{it.rawDate}」→ 解析「{it.date}」{it.date === meeting.id ? ' ✓ 符合本頁' : ''}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </details>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -334,12 +468,14 @@
                             <div className="p-8">
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                     {meeting.photos.map((photo, idx) => (
-                                        <div key={idx} className="aspect-[4/3] rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow cursor-pointer group">
+                                        <div key={idx} className="photo-cell aspect-[4/3] rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow cursor-pointer group">
                                             <img
-                                                src={photo}
+                                                src={PHOTO_BASE + photo}
                                                 alt={`會議照片 ${idx + 1}`}
+                                                loading="lazy"
                                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                                onClick={() => window.open(photo, '_blank')}
+                                                onClick={() => window.open(PHOTO_BASE + photo, '_blank')}
+                                                onError={(e) => { const cell = e.target.closest('.photo-cell'); if (cell) cell.style.display = 'none'; }}
                                             />
                                         </div>
                                     ))}
@@ -413,13 +549,11 @@
                     const proposer = item['提案者'] || '';
                     const dept = proposer.includes('/') ? proposer.split('/')[0] : proposer;
 
-                    let meetingDate = item['場次'] || '';
-                    if (meetingDate === '12/24/2025') meetingDate = '20251224';
-                    else if (meetingDate === '01/27/2026' || meetingDate === '1/27/2026') meetingDate = '20260127';
-                    else if (meetingDate === '04/21/2026' || meetingDate === '4/21/2026') meetingDate = '20260421';
+                    const meetingDate = normalizeMeetingId(item['場次'] || '');
 
                     return {
                         date: meetingDate,
+                        rawDate: item['場次'] || '',
                         id: item['序號'] || '',
                         category: item['議題類別'] || item['序號類別'] || '未分類',
                         goal: item['具體目標'] || '',
@@ -454,6 +588,16 @@
                 return mapped.sort((a, b) => getStatusWeight(a.status) - getStatusWeight(b.status));
             }, [data.tracking]);
 
+            // 合併雲端 Sheet 與本地補登的出席名單（同場次+同姓名 已存在於 Sheet 時，本地資料自動略過）
+            const mergedAttendance = useMemo(() => {
+                const api = data.attendance || [];
+                const extras = LOCAL_ATTENDANCE.filter(local => {
+                    const localId = normalizeMeetingId(local['場次']);
+                    return !api.some(p => (p['姓名'] || '').trim() === local['姓名'] && normalizeMeetingId(p['場次'] || '') === localId);
+                });
+                return [...api, ...extras];
+            }, [data.attendance]);
+
             const overviewStats = useMemo(() => {
                 const total = trackingData.length;
                 const completed = trackingData.filter(i => i.status.includes('已結案')).length;
@@ -484,41 +628,43 @@
 
             return (
                 <div className="min-h-screen font-sans bg-[#F5F5F3] flex flex-col">
-                    <nav className="bg-white border-b border-slate-200 px-8 py-5 flex flex-col md:flex-row justify-between items-center shadow-sm sticky top-0 z-20 gap-4">
-                        <div className="flex items-center gap-4 w-full md:w-auto">
-                            <div className="p-3 rounded-lg text-white" style={{ backgroundColor: COLORS.primary }}><Icons.LayoutDashboard size={28} /></div>
-                            <div>
-                                <h1 className="text-3xl font-bold tracking-tight" style={{ color: COLORS.text }}>住院醫師座談會</h1>
-                                <div className="flex items-center gap-2">
-                                    <p className="text-base text-slate-400">成效追蹤儀表板</p>
-                                    <div className="flex items-center gap-1 ml-4 text-xs font-medium text-blue-400">
-                                        {isRefreshing ? <Icons.RefreshCw size={12} className="animate-spin" /> : <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>}
-                                        {isRefreshing ? "同步中..." : `同步成功: ${lastUpdated}`}
-                                    </div>
+                    <nav className="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-20">
+                        {/* 第一列：標題 + 同步狀態 + 重新整理（響應式：窄螢幕自動換行、標題不擠壓變直排） */}
+                        <div className="max-w-[95%] mx-auto pt-3 md:pt-4 flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2.5 md:gap-3 min-w-0">
+                                <div className="p-2 md:p-2.5 rounded-lg text-white flex-shrink-0" style={{ backgroundColor: COLORS.primary }}><Icons.LayoutDashboard size={22} /></div>
+                                <h1 className="text-lg md:text-2xl font-bold tracking-tight whitespace-nowrap truncate" style={{ color: COLORS.text }}>
+                                    住院醫師座談會
+                                    <span className="hidden sm:inline text-slate-400 font-normal text-sm md:text-base ml-2 md:ml-3">成效追蹤儀表板</span>
+                                </h1>
+                            </div>
+                            <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
+                                <div className="hidden sm:flex items-center gap-1.5 text-xs font-medium text-slate-400 whitespace-nowrap">
+                                    {isRefreshing ? <Icons.RefreshCw size={12} className="animate-spin text-blue-400" /> : <div className="w-2 h-2 rounded-full bg-green-500"></div>}
+                                    {isRefreshing ? "同步中..." : `已同步 ${lastUpdated}`}
                                 </div>
+                                <button
+                                    onClick={() => fetchData(true)}
+                                    disabled={isRefreshing}
+                                    className={`p-2 rounded-lg border border-slate-200 hover:bg-slate-50 transition-all ${isRefreshing ? 'bg-blue-50 cursor-wait' : 'bg-white'}`}
+                                    title="立刻強制重新整理 Sheet"
+                                >
+                                    <Icons.RefreshCw size={16} className={isRefreshing ? "animate-spin text-blue-500" : "text-slate-500"} />
+                                </button>
                             </div>
                         </div>
-
-                        <div className="flex flex-wrap gap-3 items-center w-full md:w-auto">
-                            <button 
-                                onClick={() => fetchData(true)} 
-                                disabled={isRefreshing}
-                                className={`p-3 rounded-lg border border-slate-200 hover:bg-slate-50 transition-all ${isRefreshing ? 'bg-blue-50 cursor-wait' : 'bg-white'}`}
-                                title="立刻強制重新整理 Sheet"
-                            >
-                                <Icons.RefreshCw size={20} className={isRefreshing ? "animate-spin text-blue-500" : "text-slate-500"} />
-                            </button>
-
-                            <div className="flex gap-3 bg-slate-100 p-1.5 rounded-lg flex-1 md:flex-none overflow-x-auto">
-                                <button onClick={() => setActiveTab('overview')} className={`flex-1 md:flex-none px-6 py-3 rounded-md text-lg font-medium whitespace-nowrap transition-all duration-200 ${activeTab === 'overview' ? 'bg-white shadow-sm text-slate-700' : 'text-slate-500 hover:text-slate-700'}`}>現況追蹤 (總覽)</button>
+                        {/* 第二列：分頁列（簡約底線式，窄螢幕可橫向滑動） */}
+                        <div className="max-w-[95%] mx-auto mt-2 md:mt-3 overflow-x-auto custom-scrollbar">
+                            <div className="flex gap-4 md:gap-8 min-w-max">
+                                <button onClick={() => setActiveTab('overview')} className={`pb-2.5 pt-1 text-sm md:text-base whitespace-nowrap border-b-2 transition-colors ${activeTab === 'overview' ? 'border-[#6B859E] text-slate-800 font-bold' : 'border-transparent text-slate-400 font-medium hover:text-slate-600'}`}>總覽</button>
                                 {MEETINGS.map(m => (
-                                    <button key={m.id} onClick={() => setActiveTab(m.id)} className={`flex-1 md:flex-none px-6 py-3 rounded-md text-lg font-medium whitespace-nowrap transition-all duration-200 ${activeTab === m.id ? 'bg-white shadow-sm text-slate-700' : 'text-slate-500 hover:text-slate-700'}`}>{m.id}座談會</button>
+                                    <button key={m.id} onClick={() => setActiveTab(m.id)} className={`pb-2.5 pt-1 text-sm md:text-base whitespace-nowrap border-b-2 transition-colors ${activeTab === m.id ? 'border-[#6B859E] text-slate-800 font-bold' : 'border-transparent text-slate-400 font-medium hover:text-slate-600'}`}>{m.date}</button>
                                 ))}
                             </div>
                         </div>
                     </nav>
 
-                    <main className="p-10 max-w-[95%] mx-auto space-y-10 flex-grow w-full">
+                    <main className="p-4 md:p-10 max-w-[95%] mx-auto space-y-6 md:space-y-10 flex-grow w-full">
                         {activeTab === 'overview' && (
                             <div className="animate-fade-in space-y-8">
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -679,7 +825,7 @@
                                     key={m.id}
                                     meeting={m}
                                     trackingData={trackingData}
-                                    attendanceData={data.attendance || []}
+                                    attendanceData={mergedAttendance}
                                 />
                             )
                         ))}
