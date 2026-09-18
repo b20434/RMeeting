@@ -744,7 +744,11 @@
                 raw.meetings.forEach(m => {
                     const id = toDateKey(m['場次ID'] || m['場次'] || m['日期']);
                     if (!id) return;
-                    map.set(id, { id, time: cleanStr(m['時間']), location: cleanStr(m['地點']), photoCount: parseInt(m['照片數']) || 0, note: cleanStr(m['備註']) });
+                    // 時間：只保留 HH:mm；若是 Sheet 時間儲存格被轉成 1899 年的日期字串則視為未填
+                    const tRaw = cleanStr(m['時間']);
+                    const tMatch = /1899|GMT/.test(tRaw) ? null : tRaw.match(/(\d{1,2}):(\d{2})/);
+                    const time = tMatch ? `${tMatch[1].padStart(2, '0')}:${tMatch[2]}` : '';
+                    map.set(id, { id, time, location: cleanStr(m['地點']), photoCount: parseInt(m['照片數']) || 0, note: cleanStr(m['備註']) });
                 });
                 const known = new Set(map.keys());
                 [...raw.tracking, ...raw.attendance].forEach(r => {
