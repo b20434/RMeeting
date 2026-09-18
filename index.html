@@ -13,55 +13,24 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
-        body {
-            font-family: "Microsoft JhengHei", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
+        body { font-family: "Microsoft JhengHei", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,.05); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0,0,0,.2); border-radius: 4px; }
+        .animate-fade-in { animation: fadeIn .4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .drawer-enter { animation: slideIn .25s ease-out; }
+        @keyframes slideIn { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .sync-pulse { animation: pulse-blue 2s cubic-bezier(.4,0,.6,1) infinite; }
+        @keyframes pulse-blue { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
 
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.05);
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 4px;
-        }
-
-        .animate-fade-in {
-            animation: fadeIn 0.5s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .animate-spin-slow {
-            animation: spin 3s linear infinite;
-        }
-
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .sync-pulse {
-            animation: pulse-blue 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-
-        @keyframes pulse-blue {
-            0%, 100% { opacity: 1; }
-            50% { opacity: .3; }
+        /* 列印（評鑑報表用） */
+        @media print {
+            .no-print { display: none !important; }
+            body { background: #fff !important; }
+            main { padding: 0 !important; max-width: 100% !important; }
+            .print-break { page-break-before: always; }
+            .print-card { box-shadow: none !important; border: 1px solid #ddd !important; }
         }
     </style>
 </head>
@@ -71,715 +40,834 @@
 
     <script type="text/babel">
         const { useState, useEffect, useMemo, useCallback } = React;
-        const { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip: RechartsTooltip, Legend, ResponsiveContainer, LabelList } = window.Recharts || {};
+        const { PieChart, Pie, Cell, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip: RechartsTooltip, Legend, ResponsiveContainer, LabelList } = window.Recharts || {};
 
-        // --- 設定與常數 ---
+        // =====================================================================
+        //  設定區：以後幾乎不需要動這裡。場次資料改由 Google Sheet「場次清單」提供
+        // =====================================================================
         const API_URL = "https://script.google.com/macros/s/AKfycbwp8wbNQaU0J9SQX6r1EUdhuAvnfDgsyfSXkIjtOHtGeXgu8hSN5_jKQ9_WqpFbvhkR9g/exec";
-        // 照片來源：GitHub Raw 絕對路徑（無論本機開啟或部署於 GitHub Pages 皆可正常顯示）
         const PHOTO_BASE = "https://raw.githubusercontent.com/b20434/RMeeting/main/";
-        // 更新頻率為 1 分鐘
-        const REFRESH_INTERVAL = 60000; 
-
-        const MEETINGS = [
-            { id: '20251224', date: '2025/12/24', displayDate: '2025年12月24日 (週三)', time: '12:00', location: '554會議室', dateFilter: ['12/24/2025', '2025/12/24', '2025-12-24', '12/24'], photos: ['photos/20251224_01.jpg', 'photos/20251224_02.jpg', 'photos/20251224_03.jpg', 'photos/20251224_04.jpg'] },
-            { id: '20260127', date: '2026/01/27', displayDate: '2026年01月27日 (週一)', time: '12:00', location: '563會議室', dateFilter: ['01/27/2026', '1/27/2026', '2026/01/27', '2026-01-27', '01/27', '1/27'], photos: ['photos/20260127_01.jpg', 'photos/20260127_02.jpg', 'photos/20260127_03.jpg', 'photos/20260127_04.jpg', 'photos/20260127_05.jpg'] },
-            { id: '20260421', date: '2026/04/21', displayDate: '2026年04月21日 (週二)', time: '12:30', location: '5F外科討論室', dateFilter: ['04/21/2026', '4/21/2026', '2026/04/21', '2026-04-21', '04/21', '4/21'], photos: ['photos/20260421_01.jpg', 'photos/20260421_02.jpg', 'photos/20260421_03.jpg', 'photos/20260421_04.jpg', 'photos/20260421_05.jpg'] },
-            { id: '20260527', date: '2026/05/27', displayDate: '2026年05月27日 (週三)', time: '12:30', location: '白宮貴賓室', dateFilter: ['05/27/2026', '5/27/2026', '2026/05/27', '2026-05-27', '05/27', '5/27'], photos: ['photos/20260527_01.JPG', 'photos/20260527_02.JPG', 'photos/20260527_03.JPG', 'photos/20260527_04.JPG', 'photos/20260527_05.JPG'] },
-            { id: '20260603', date: '2026/06/03', displayDate: '2026年06月03日 (週三)', time: '12:30', location: '5樓外科空橋討論室', dateFilter: ['06/03/2026', '6/3/2026', '6/03/2026', '2026/06/03', '2026-06-03', '06/03', '6/3'], photos: ['photos/20260603_01.JPG', 'photos/20260603_02.JPG', 'photos/20260603_03.JPG', 'photos/20260603_04.JPG'] }
-        ];
+        const PHOTO_EXTS = ['jpg', 'JPG', 'jpeg', 'png'];   // 照片副檔名自動嘗試順序
+        const PAGE_SIZE = 20;                                // 清單每頁筆數
 
         const COLORS = {
             primary: '#6B859E', secondary: '#7B9E89', accent: '#D6A28D', warning: '#B6A6A0',
             background: '#F5F5F3', text: '#4A5568', subText: '#718096',
         };
+        const STATUS_COLOR = { '已結案': COLORS.secondary, '進行中': COLORS.accent, '待決議': COLORS.warning };
+        const CATEGORY_PALETTE = ['#6B859E', '#7B9E89', '#D6A28D', '#9C8AA5', '#B6A6A0', '#8FA8B8', '#C9B79C', '#A3B5A0'];
 
         const RESIDENT_KEYWORDS = ['住院醫師', 'R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8', 'R9',
             'LR1', 'LR2', 'LR3', 'LR4', 'LR5', '總醫師', 'CR', '研究員', '代理總醫師'];
 
-        const formatDate = (dateStr) => {
-            if (!dateStr) return '';
-            if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateStr)) return dateStr;
-            const date = new Date(dateStr);
-            if (isNaN(date.getTime())) return dateStr;
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            const year = date.getFullYear();
-            return `${month}/${day}/${year}`;
-        };
+        // =====================================================================
+        //  日期工具：內部一律用 8 碼西元 key（20260603），顯示一律民國 115/06/03
+        // =====================================================================
+        const cleanStr = (raw) => String(raw ?? '')
+            .replace(/[ ​-‍﻿]/g, '')
+            .replace(/[\r\n\t]/g, ' ')
+            .replace(/[０-９]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0))
+            .trim();
 
-        // 已知座談會場次 ID 集合（供 normalizeMeetingId 校驗月/日是否被顛倒）
-        const KNOWN_MEETING_IDS = new Set(['20251224', '20260127', '20260421', '20260527', '20260603']);
-
-        // 場次智慧解析：不論 Sheet 填 12/24/2025、2026/6/3、2026-06-03 或日期儲存格(ISO字串)，一律轉為 YYYYMMDD 場次 ID
-        const normalizeMeetingId = (raw) => {
-            if (raw === null || raw === undefined) return '';
-            // 清除各種隱藏/干擾字元：不換行空格、零寬字元、換行、全形數字轉半形
-            let s = String(raw)
-                .replace(/[\u00a0\u200b-\u200d\uFEFF]/g, '')  // NBSP、零寬空格
-                .replace(/[\r\n\t]/g, ' ')
-                .replace(/[０-９]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0))  // 全形數字
-                .trim();
+        // 把各種寫法轉成 YYYYMMDD；knownIds 用來校正月/日顛倒
+        const toDateKey = (raw, knownIds) => {
+            const s = cleanStr(raw);
             if (!s) return '';
-            if (/^20\d{6}$/.test(s)) return s; // 已是 8 碼場次 ID
-
+            if (/^20\d{6}(\.0+)?$/.test(s)) return s.slice(0, 8);
             const build = (y, m, d) => `${y}${String(m).padStart(2, '0')}${String(d).padStart(2, '0')}`;
+            const pick = (a, b) => (knownIds && knownIds.has(b) && !knownIds.has(a)) ? b : a;
 
-            // ISO 日期時間字串（Google Sheet 日期儲存格經 API 回傳的格式），以台灣時區 (+8) 校正
-            if (/^\d{4}-\d{2}-\d{2}T/.test(s)) {
+            if (/^\d{4}-\d{2}-\d{2}T/.test(s)) {            // ISO 字串（Sheet 日期儲存格）
                 const dt = new Date(s);
-                if (!isNaN(dt.getTime())) {
-                    const tw = new Date(dt.getTime() + 8 * 60 * 60 * 1000);
-                    return build(tw.getUTCFullYear(), tw.getUTCMonth() + 1, tw.getUTCDate());
-                }
+                if (!isNaN(dt)) { const tw = new Date(dt.getTime() + 8 * 3600e3); return build(tw.getUTCFullYear(), tw.getUTCMonth() + 1, tw.getUTCDate()); }
             }
-
-            const ymd = s.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/); // YYYY/M/D
-            const dmy = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/); // A/B/YYYY（A、B 可能是 月/日 或 日/月）
-
-            if (ymd) {
-                const y = ymd[1], a = parseInt(ymd[2], 10), b = parseInt(ymd[3], 10);
-                const primary = build(y, a, b);
-                if (KNOWN_MEETING_IDS.has(primary)) return primary;
-                const swapped = build(y, b, a);           // 嘗試對調（防 M/D 與 D/M 顛倒）
-                if (KNOWN_MEETING_IDS.has(swapped)) return swapped;
-                return primary;
+            let m;
+            if ((m = s.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/))) {          // YYYY/M/D
+                return pick(build(m[1], +m[2], +m[3]), build(m[1], +m[3], +m[2]));
             }
-            if (dmy) {
-                const y = dmy[3], a = parseInt(dmy[1], 10), b = parseInt(dmy[2], 10);
-                const asMDY = build(y, a, b);             // 視為 MM/DD/YYYY
-                if (KNOWN_MEETING_IDS.has(asMDY)) return asMDY;
-                const asDMY = build(y, b, a);             // 視為 DD/MM/YYYY
-                if (KNOWN_MEETING_IDS.has(asDMY)) return asDMY;
-                return asMDY;
+            if ((m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/))) {          // M/D/YYYY（Sheet 美式）
+                return pick(build(m[3], +m[1], +m[2]), build(m[3], +m[2], +m[1]));
             }
-
-            const parsed = new Date(s);
-            if (isNaN(parsed.getTime())) return s;
-            const y = parsed.getFullYear(), m = parsed.getMonth() + 1, d = parsed.getDate();
-            const primary = build(y, m, d);
-            if (KNOWN_MEETING_IDS.has(primary)) return primary;
-            const swapped = build(y, d, m);  // 月日對調（防 Sheet 地區設定把 6/3 誤存成 3/6）
-            if (KNOWN_MEETING_IDS.has(swapped)) return swapped;
-            return primary;
+            if ((m = s.match(/^(\d{2,3})[\/\-.](\d{1,2})[\/\-.](\d{1,2})$/)) && +m[1] < 200) { // 民國 115/06/03
+                return build(+m[1] + 1911, +m[2], +m[3]);
+            }
+            const p = new Date(s);
+            return isNaN(p) ? '' : build(p.getFullYear(), p.getMonth() + 1, p.getDate());
         };
 
+        const keyToDate = (key) => key ? new Date(+key.slice(0, 4), +key.slice(4, 6) - 1, +key.slice(6, 8)) : null;
+
+        // 防呆：追蹤/提案/結案日期不可能早於座談會日期、也不可能在未來；
+        // 若月日對調後才合理，就採對調後的值（Sheet 地區設定把 6/3 存成 3/6 的常見狀況）
+        const fixDate = (key, meetingId) => {
+            if (!key || !meetingId) return key;
+            const m = +key.slice(4, 6), d = +key.slice(6, 8);
+            const swapped = (d <= 12 && m !== d) ? `${key.slice(0, 4)}${String(d).padStart(2, '0')}${String(m).padStart(2, '0')}` : null;
+            const ok = (k) => k >= meetingId && k <= todayKey();
+            return (!ok(key) && swapped && ok(swapped)) ? swapped : key;
+        };
+        const rocYear = (key) => key ? (+key.slice(0, 4) - 1911) : null;
+        const toROC = (key) => key ? `${rocYear(key)}/${key.slice(4, 6)}/${key.slice(6, 8)}` : '';
+        const toROCLong = (key) => {
+            if (!key) return '';
+            const d = keyToDate(key);
+            const wd = ['日', '一', '二', '三', '四', '五', '六'][d.getDay()];
+            return `民國${rocYear(key)}年${+key.slice(4, 6)}月${+key.slice(6, 8)}日（週${wd}）`;
+        };
+        const daysBetween = (k1, k2) => (k1 && k2) ? Math.round((keyToDate(k2) - keyToDate(k1)) / 86400e3) : null;
+        const todayKey = () => { const d = new Date(); return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`; };
+
+        // =====================================================================
+        //  Hash 路由：#/  #/year/115  #/meeting/20260603  #/report
+        // =====================================================================
+        const parseHash = () => {
+            const h = (location.hash || '#/').replace(/^#\/?/, '');
+            const [page, arg] = h.split('/');
+            if (page === 'year' && arg) return { page: 'year', year: +arg };
+            if (page === 'meeting' && arg) return { page: 'meeting', id: arg };
+            if (page === 'report') return { page: 'report' };
+            return { page: 'overview' };
+        };
+        const go = (hash) => { location.hash = hash; window.scrollTo({ top: 0, behavior: 'smooth' }); };
+
+        // =====================================================================
+        //  Icons
+        // =====================================================================
+        const I = (path, extra = {}) => ({ size = 20, className = '' }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} dangerouslySetInnerHTML={{ __html: path }} {...extra} />
+        );
         const Icons = {
-            LayoutDashboard: () => <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="9" x="3" y="3" rx="1" /><rect width="7" height="5" x="14" y="3" rx="1" /><rect width="7" height="9" x="14" y="12" rx="1" /><rect width="7" height="5" x="3" y="16" rx="1" /></svg>,
-            FileText: ({ size = 28 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" /><polyline points="14 2 14 8 20 8" /></svg>,
-            CheckCircle2: ({ size = 28 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" /></svg>,
-            Clock: ({ size = 28 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>,
-            HelpCircle: ({ size = 28 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><path d="M12 17h.01" /></svg>,
-            Users: ({ size = 28 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>,
-            Calendar: ({ size = 28 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2" /><line x1="16" x2="16" y1="2" y2="6" /><line x1="8" x2="8" y1="2" y2="6" /><line x1="3" x2="21" y1="10" y2="10" /></svg>,
-            ChevronRight: ({ size = 28 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>,
-            Filter: ({ size = 28 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg>,
-            Loader2: ({ size = 28, className }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>,
-            AlertCircle: ({ size = 28 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" x2="12" y1="8" y2="12" /><line x1="12" x2="12.01" y1="16" y2="16" /></svg>,
-            Stethoscope: ({ size = 28 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3" /><path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4" /><circle cx="20" cy="10" r="2" /></svg>,
-            UserCheck: ({ size = 28 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><polyline points="16 11 18 13 22 9" /></svg>,
-            Camera: ({ size = 28 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" /><circle cx="12" cy="13" r="3" /></svg>,
-            Flag: ({ size = 28 }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><line x1="4" x2="4" y1="22" y2="15" /></svg>,
-            RefreshCw: ({ size = 18, className }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M3 21v-5h5" /></svg>,
+            LayoutDashboard: I('<rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>'),
+            FileText: I('<path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/>'),
+            CheckCircle2: I('<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>'),
+            Clock: I('<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>'),
+            HelpCircle: I('<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>'),
+            Users: I('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'),
+            Calendar: I('<rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/>'),
+            ChevronRight: I('<path d="m9 18 6-6-6-6"/>'),
+            ChevronLeft: I('<path d="m15 18-6-6 6-6"/>'),
+            Filter: I('<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>'),
+            Loader2: I('<path d="M21 12a9 9 0 1 1-6.219-8.56"/>'),
+            AlertCircle: I('<circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>'),
+            Stethoscope: I('<path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/><path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4"/><circle cx="20" cy="10" r="2"/>'),
+            UserCheck: I('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/>'),
+            Camera: I('<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>'),
+            RefreshCw: I('<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/>'),
+            Search: I('<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>'),
+            X: I('<path d="M18 6 6 18"/><path d="m6 6 12 12"/>'),
+            Printer: I('<polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/>'),
+            Download: I('<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>'),
+            TrendingUp: I('<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>'),
+            Star: I('<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>'),
+            MapPin: I('<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>'),
         };
 
-        const TrackingTimeline = ({ issue }) => {
-            const timelineData = [
-                { label: '提案', date: issue.submitDate, summary: '', type: 'start' },
-                { label: '第一次追蹤', date: issue.track1Date, summary: issue.track1Summary, type: 'track' },
-                { label: '第二次追蹤', date: issue.track2Date, summary: issue.track2Summary, type: 'track' },
-                { label: '第三次追蹤', date: issue.track3Date, summary: issue.track3Summary, type: 'track' },
-                { label: '結案', date: issue.closeDate, summary: '', type: 'end' },
-            ].filter(item => item.date && item.date !== '');
-
-            if (timelineData.length === 0) return null;
-
-            const progressNum = parseInt(String(issue.progressPercent || '0').replace('%', ''), 10) || 0;
-
-            return (
-                <div className="mb-6 bg-white p-4 rounded-xl border border-slate-200">
-                    {issue.progressPercent && (
-                        <div className="mb-4">
-                            <div className="flex justify-between items-center mb-2">
-                                <span className="text-sm font-medium text-slate-600">進度</span>
-                                <span className="text-sm font-bold text-slate-700">{progressNum}%</span>
-                            </div>
-                            <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                                <div
-                                    className="h-full rounded-full transition-all duration-500"
-                                    style={{
-                                        width: `${Math.min(progressNum, 100)}%`,
-                                        background: progressNum >= 100 ? '#22c55e' : progressNum >= 50 ? '#eab308' : '#6B859E'
-                                    }}
-                                />
-                            </div>
-                        </div>
-                    )}
-                    {issue.deadline && (
-                        <div className="flex items-center gap-2 mb-4 text-sm">
-                            <Icons.Flag size={14} className="text-orange-500" />
-                            <span className="text-slate-500">預計完成：</span>
-                            <span className="font-medium text-slate-700">{issue.deadline}</span>
-                        </div>
-                    )}
-                    <div className="relative">
-                        <div className="flex items-start justify-between gap-2 overflow-x-auto pb-2">
-                            {timelineData.map((item, idx) => (
-                                <div key={idx} className="flex flex-col items-center min-w-[80px] flex-1">
-                                    <div className="flex items-center w-full">
-                                        {idx > 0 && <div className="flex-1 h-0.5 bg-green-400"></div>}
-                                        <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${item.type === 'end' ? 'bg-green-500 border-green-500' :
-                                            item.type === 'start' ? 'bg-blue-500 border-blue-500' :
-                                                'bg-amber-400 border-amber-400'
-                                            }`}></div>
-                                        {idx < timelineData.length - 1 && <div className="flex-1 h-0.5 bg-green-400"></div>}
-                                    </div>
-                                    <span className="text-xs font-medium text-slate-600 mt-2 text-center">{item.label}</span>
-                                    <span className="text-xs text-slate-400 text-center">{item.date}</span>
-                                    {item.summary && (
-                                        <span className="text-xs text-slate-500 mt-1 text-center line-clamp-2 max-w-[100px]" title={item.summary}>
-                                            {item.summary.length > 20 ? item.summary.substring(0, 20) + '...' : item.summary}
-                                        </span>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        const StatusBadge = ({ status }) => {
+        // =====================================================================
+        //  小元件
+        // =====================================================================
+        const StatusBadge = ({ status, small }) => {
             let color = COLORS.subText, bg = '#E2E8F0', Icon = Icons.HelpCircle;
-            if (status && status.includes('已結案')) { color = '#2F855A'; bg = '#E6FFFA'; Icon = Icons.CheckCircle2; }
-            else if (status && status.includes('進行中')) { color = '#C05621'; bg = '#FEEBC8'; Icon = Icons.Clock; }
-            else if (status && (status.includes('待決議') || status.includes('未'))) { color = '#744210'; bg = '#FAF5FF'; Icon = Icons.HelpCircle; }
-            return <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-base font-medium border whitespace-nowrap`} style={{ color, backgroundColor: bg, borderColor: `${color}30` }}><Icon size={16} /> {status || '未定義'}</span>;
+            if (status === '已結案') { color = '#2F855A'; bg = '#E6FFFA'; Icon = Icons.CheckCircle2; }
+            else if (status === '進行中') { color = '#C05621'; bg = '#FEEBC8'; Icon = Icons.Clock; }
+            else { color = '#744210'; bg = '#FAF5FF'; }
+            return <span className={`inline-flex items-center gap-1 ${small ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm'} rounded-full font-medium border whitespace-nowrap`} style={{ color, backgroundColor: bg, borderColor: `${color}30` }}><Icon size={small ? 12 : 14} /> {status || '未定義'}</span>;
         };
 
-        const StatCard = ({ title, value, subtext, icon: Icon, color }) => (
-            <div className="bg-white p-7 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
-                <div className="flex justify-between items-start">
-                    <div>
-                        <p className="text-lg font-medium text-slate-500 mb-1">{title}</p>
-                        <h3 className="text-5xl font-bold" style={{ color: COLORS.text }}>{value}</h3>
-                    </div>
-                    <div className={`p-4 rounded-xl opacity-80`} style={{ backgroundColor: `${color}20`, color: color }}><Icon size={32} /></div>
+        const StatCard = ({ title, value, unit, subtext, icon: Icon, color }) => (
+            <div className="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between print-card">
+                <div className="min-w-0">
+                    <p className="text-sm font-medium mb-1" style={{ color: COLORS.subText }}>{title}</p>
+                    <h3 className="text-4xl font-bold" style={{ color: COLORS.text }}>{value}<span className="text-base font-normal ml-1 text-slate-400">{unit}</span></h3>
+                    {subtext && <p className="text-xs mt-1 text-slate-400">{subtext}</p>}
                 </div>
-                {subtext && <p className="text-base text-slate-400 mt-3">{subtext}</p>}
+                <div className="p-3 rounded-xl text-white flex-shrink-0" style={{ backgroundColor: color }}><Icon size={24} /></div>
             </div>
         );
 
-        const MeetingPage = ({ meeting, trackingData, attendanceData }) => {
-            const meetingIssues = useMemo(() => {
-                return trackingData.filter(item => item.date === meeting.id);
-            }, [trackingData, meeting]);
+        const Card = ({ title, icon: Icon, children, right, className = '' }) => (
+            <div className={`bg-white rounded-2xl shadow-sm border border-slate-100 print-card ${className}`}>
+                {title && <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between gap-3">
+                    <h3 className="font-bold text-lg text-slate-700 flex items-center gap-2">{Icon && <Icon size={20} className="text-slate-400" />}{title}</h3>
+                    {right}
+                </div>}
+                <div className="p-6">{children}</div>
+            </div>
+        );
 
-            const meetingAttendance = useMemo(() => {
-                return attendanceData.filter(person => {
-                    const raw = person['場次'] || '';
-                    if (normalizeMeetingId(raw) === meeting.id) return true; // 智慧解析（含日期儲存格）
-                    return meeting.dateFilter.some(df => raw.includes(df)); // 保留原字串包含比對作為後備
-                });
-            }, [attendanceData, meeting]);
+        // 議題完整時間軸（垂直、摘要完整顯示）
+        const TimelineFull = ({ issue }) => {
+            const items = [
+                { label: '提案', date: issue.submitDate, text: issue.resolution, color: '#3b82f6', textLabel: '會議決議' },
+                { label: '第一次追蹤', date: issue.track1Date, text: issue.track1Summary, color: '#f59e0b' },
+                { label: '第二次追蹤', date: issue.track2Date, text: issue.track2Summary, color: '#8b5cf6' },
+                { label: '第三次追蹤', date: issue.track3Date, text: issue.track3Summary, color: '#ec4899' },
+                { label: '結案', date: issue.closeDate, text: issue.closeNote, color: '#22c55e', textLabel: '結案說明' },
+            ].filter(i => i.date || i.text);
+            if (!items.length) return <p className="text-slate-400 text-sm">尚無追蹤紀錄</p>;
+            return (
+                <ol className="relative border-l-2 border-slate-200 ml-2 space-y-5">
+                    {items.map((it, i) => (
+                        <li key={i} className="ml-5">
+                            <span className="absolute -left-[9px] w-4 h-4 rounded-full border-2 border-white shadow" style={{ backgroundColor: it.color }}></span>
+                            <div className="flex flex-wrap items-baseline gap-2 mb-1">
+                                <span className="font-bold text-slate-700">{it.label}</span>
+                                <span className="text-xs font-mono text-slate-400">{toROC(it.date) || '（未填日期）'}</span>
+                            </div>
+                            {it.text && <p className="text-sm text-slate-600 whitespace-pre-wrap leading-relaxed bg-slate-50 rounded-lg p-3 border border-slate-100">{it.textLabel && <span className="font-semibold text-slate-500">{it.textLabel}：</span>}{it.text}</p>}
+                        </li>
+                    ))}
+                </ol>
+            );
+        };
 
-            const stats = useMemo(() => {
-                const residents = meetingAttendance.filter(p => {
-                    const title = p['職稱'] || '';
-                    const role = p['職級'] || '';
-                    return role === '住院醫師' || RESIDENT_KEYWORDS.some(k => title.includes(k));
-                });
-                const residentDepts = [...new Set(residents.map(r => r['科別名'] || r['科別'] || '').filter(d => d))];
-                const advisors = meetingAttendance.filter(p => p['職級'] === '指導長官').map(p => ({ name: p['姓名'], title: p['職稱'] }));
-                const chairs = meetingAttendance.filter(p => p['職級'] === '主席').map(p => ({ name: p['姓名'], title: p['職稱'] }));
-                const teachingSups = meetingAttendance.filter(p => p['職級'] === '教學主管').map(p => ({ name: p['姓名'], title: p['職稱'] }));
-                const attendingSups = meetingAttendance.filter(p => p['職級'] === '列席主管').map(p => ({ name: p['姓名'], title: p['職稱'] }));
-                const coordinators = meetingAttendance.filter(p => p['職級'] === '教學負責人').map(p => ({ name: p['姓名'], title: p['職稱'] }));
+        // 迷你時間軸（表格用）
+        const TimelineMini = ({ issue }) => {
+            const pts = [
+                { l: '提案', d: issue.submitDate, c: '#3b82f6' }, { l: '追蹤1', d: issue.track1Date, c: '#f59e0b' },
+                { l: '追蹤2', d: issue.track2Date, c: '#8b5cf6' }, { l: '追蹤3', d: issue.track3Date, c: '#ec4899' },
+                { l: '結案', d: issue.closeDate, c: '#22c55e' },
+            ].filter(p => p.d);
+            if (!pts.length) return <span className="text-xs text-slate-400">尚無紀錄</span>;
+            return (
+                <div className="flex items-start">
+                    {pts.map((p, i) => (
+                        <div key={i} className="flex items-center">
+                            <div className="flex flex-col items-center min-w-[52px]">
+                                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: p.c }}></div>
+                                <span className="text-[10px] text-slate-500 mt-1">{p.l}</span>
+                                <span className="text-[10px] text-slate-400 font-mono">{toROC(p.d).slice(-5)}</span>
+                            </div>
+                            {i < pts.length - 1 && <div className="w-3 h-0.5 bg-slate-300 -mt-4"></div>}
+                        </div>
+                    ))}
+                </div>
+            );
+        };
 
-                return {
-                    totalAttendees: meetingAttendance.length,
-                    residentCount: residents.length,
-                    totalIssues: meetingIssues.length,
-                    residentDepts,
-                    chairs,
-                    advisors,
-                    teachingSups,
-                    attendingSups,
-                    coordinators
-                };
-            }, [meetingAttendance, meetingIssues]);
+        // 議題詳情抽屜
+        const IssueDrawer = ({ issue, meetings, onClose }) => {
+            useEffect(() => {
+                const onKey = (e) => e.key === 'Escape' && onClose();
+                window.addEventListener('keydown', onKey);
+                document.body.style.overflow = 'hidden';
+                return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = ''; };
+            }, []);
+            if (!issue) return null;
+            const m = meetings.find(x => x.id === issue.meetingId);
+            const days = daysBetween(issue.submitDate, issue.closeDate);
+            return (
+                <div className="fixed inset-0 z-50 flex justify-end no-print">
+                    <div className="absolute inset-0 bg-slate-900/40" onClick={onClose}></div>
+                    <div className="relative w-full max-w-2xl bg-white h-full shadow-2xl overflow-y-auto custom-scrollbar drawer-enter">
+                        <div className="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-start justify-between gap-4 z-10">
+                            <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-2 mb-2">
+                                    <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">#{issue.id}</span>
+                                    <StatusBadge status={issue.status} small />
+                                    <button onClick={() => { onClose(); go(`#/meeting/${issue.meetingId}`); }} className="text-xs text-[#6B859E] hover:underline flex items-center gap-1"><Icons.Calendar size={12} /> {toROC(issue.meetingId)} 座談會</button>
+                                </div>
+                                <h3 className="text-xl font-bold text-slate-800 leading-snug">{issue.goal}</h3>
+                            </div>
+                            <button onClick={onClose} className="p-2 rounded-lg hover:bg-slate-100 text-slate-500 flex-shrink-0"><Icons.X size={20} /></button>
+                        </div>
+                        <div className="p-6 space-y-6">
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div className="bg-slate-50 rounded-lg p-3"><span className="block text-xs text-slate-400 mb-1">議題類別</span>{issue.category}</div>
+                                <div className="bg-slate-50 rounded-lg p-3"><span className="block text-xs text-slate-400 mb-1">提案者</span>{issue.proposer || '-'}</div>
+                                <div className="bg-slate-50 rounded-lg p-3"><span className="block text-xs text-slate-400 mb-1">負責單位</span>{issue.pic || '-'}</div>
+                                <div className="bg-slate-50 rounded-lg p-3"><span className="block text-xs text-slate-400 mb-1">負責窗口</span>{issue.contact || '-'}</div>
+                                {days !== null && <div className="bg-slate-50 rounded-lg p-3 col-span-2"><span className="block text-xs text-slate-400 mb-1">結案歷時</span>{days} 天（{toROC(issue.submitDate)} → {toROC(issue.closeDate)}）</div>}
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-slate-700 mb-4 flex items-center gap-2"><Icons.TrendingUp size={18} className="text-slate-400" /> 追蹤歷程</h4>
+                                <TimelineFull issue={issue} />
+                            </div>
+                            {issue.note && <div className="text-sm text-slate-500 bg-amber-50 border border-amber-100 rounded-lg p-3"><span className="font-semibold">備註：</span>{issue.note}</div>}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // 議題清單（含篩選、分頁）—— 總覽與年度頁共用
+        const IssueTable = ({ issues, meetings, years, defaultOpenOnly = false, showYearFilter = true, onSelect, title }) => {
+            const [q, setQ] = useState('');
+            const [fYear, setFYear] = useState('');
+            const [fStatus, setFStatus] = useState('');
+            const [fPic, setFPic] = useState('');
+            const [showClosed, setShowClosed] = useState(!defaultOpenOnly);
+            const [page, setPage] = useState(1);
+
+            const pics = useMemo(() => [...new Set(issues.map(i => i.pic).filter(Boolean))].sort(), [issues]);
+
+            const filtered = useMemo(() => {
+                const kw = q.trim().toLowerCase();
+                return issues.filter(i =>
+                    (showClosed || i.status !== '已結案') &&
+                    (!fYear || i.year === +fYear) &&
+                    (!fStatus || i.status === fStatus) &&
+                    (!fPic || i.pic === fPic) &&
+                    (!kw || [i.goal, i.proposer, i.pic, i.category, i.resolution, i.track1Summary, i.track2Summary, i.track3Summary].join(' ').toLowerCase().includes(kw))
+                );
+            }, [issues, q, fYear, fStatus, fPic, showClosed]);
+
+            useEffect(() => setPage(1), [q, fYear, fStatus, fPic, showClosed]);
+            const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+            const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+            const sel = "text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#6B859E]/30";
 
             return (
-                <div className="animate-fade-in space-y-8">
+                <Card title={title} icon={Icons.FileText} right={<span className="text-sm text-slate-400">{filtered.length} 筆</span>}>
+                    <div className="flex flex-wrap gap-3 mb-5 no-print items-center">
+                        <div className="relative flex-1 min-w-[200px]">
+                            <Icons.Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <input value={q} onChange={e => setQ(e.target.value)} placeholder="搜尋議題、提案者、負責單位、追蹤內容…" className={`${sel} w-full pl-9`} />
+                        </div>
+                        {showYearFilter && <select value={fYear} onChange={e => setFYear(e.target.value)} className={sel}><option value="">全部年度</option>{years.map(y => <option key={y} value={y}>民國 {y} 年</option>)}</select>}
+                        <select value={fStatus} onChange={e => setFStatus(e.target.value)} className={sel}><option value="">全部狀態</option><option>待決議</option><option>進行中</option><option>已結案</option></select>
+                        <select value={fPic} onChange={e => setFPic(e.target.value)} className={sel}><option value="">全部負責單位</option>{pics.map(p => <option key={p}>{p}</option>)}</select>
+                        <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer select-none"><input type="checkbox" checked={showClosed} onChange={e => setShowClosed(e.target.checked)} className="accent-[#6B859E]" /> 顯示已結案</label>
+                    </div>
+
+                    <div className="overflow-x-auto -mx-6 px-6">
+                        <table className="w-full text-left border-collapse">
+                            <thead className="bg-slate-50 text-slate-600 text-xs tracking-wider">
+                                <tr>
+                                    <th className="p-3 font-bold whitespace-nowrap">場次</th>
+                                    <th className="p-3 font-bold whitespace-nowrap">狀態</th>
+                                    <th className="p-3 font-bold">具體目標</th>
+                                    <th className="p-3 font-bold hidden lg:table-cell whitespace-nowrap">提出科別</th>
+                                    <th className="p-3 font-bold hidden lg:table-cell whitespace-nowrap">負責單位</th>
+                                    <th className="p-3 font-bold hidden md:table-cell">追蹤時間軸</th>
+                                    <th className="p-3 font-bold hidden xl:table-cell">最新進度</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100 text-sm">
+                                {pageItems.length ? pageItems.map(it => (
+                                    <tr key={it.key} onClick={() => onSelect(it)} className="hover:bg-[#6B859E]/5 cursor-pointer transition-colors">
+                                        <td className="p-3 align-top font-mono text-xs text-slate-500 whitespace-nowrap">{toROC(it.meetingId)}</td>
+                                        <td className="p-3 align-top"><StatusBadge status={it.status} small /></td>
+                                        <td className="p-3 align-top">
+                                            <div className="font-semibold text-slate-800 leading-snug line-clamp-3" title={it.goal}>{it.goal}</div>
+                                            <div className="lg:hidden mt-1 text-xs text-slate-400">{it.dept} · {it.pic}</div>
+                                        </td>
+                                        <td className="p-3 align-top text-slate-500 hidden lg:table-cell whitespace-nowrap">{it.dept}</td>
+                                        <td className="p-3 align-top text-slate-500 hidden lg:table-cell whitespace-nowrap">{it.pic}</td>
+                                        <td className="p-3 align-top hidden md:table-cell"><TimelineMini issue={it} /></td>
+                                        <td className="p-3 align-top text-slate-500 hidden xl:table-cell max-w-[320px]"><div className="line-clamp-2">{it.latest || '-'}</div></td>
+                                    </tr>
+                                )) : (
+                                    <tr><td colSpan="7" className="p-10 text-center text-slate-400">{defaultOpenOnly && !showClosed ? '🎉 目前沒有未結案的議題' : '沒有符合條件的議題'}</td></tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {totalPages > 1 && (
+                        <div className="flex items-center justify-between mt-4 text-sm text-slate-500 no-print">
+                            <span>第 {page} / {totalPages} 頁</span>
+                            <div className="flex gap-2">
+                                <button disabled={page === 1} onClick={() => setPage(p => p - 1)} className="p-2 rounded-lg border border-slate-200 disabled:opacity-40 hover:bg-slate-50"><Icons.ChevronLeft size={16} /></button>
+                                <button disabled={page === totalPages} onClick={() => setPage(p => p + 1)} className="p-2 rounded-lg border border-slate-200 disabled:opacity-40 hover:bg-slate-50"><Icons.ChevronRight size={16} /></button>
+                            </div>
+                        </div>
+                    )}
+                </Card>
+            );
+        };
+
+        // 圖表：狀態分佈甜甜圈
+        const StatusDonut = ({ issues, height = 200 }) => {
+            const data = ['已結案', '進行中', '待決議'].map(s => ({ name: s, value: issues.filter(i => i.status === s).length, color: STATUS_COLOR[s] })).filter(d => d.value);
+            if (!data.length) return <p className="text-slate-400 text-sm text-center py-8">無資料</p>;
+            return (
+                <div style={{ height }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                            <Pie data={data} cy="45%" innerRadius={height * 0.22} outerRadius={height * 0.33} paddingAngle={4} dataKey="value" label={({ value }) => value} labelLine={false} style={{ fontSize: 13, fontWeight: 600 }}>
+                                {data.map((d, i) => <Cell key={i} fill={d.color} />)}
+                            </Pie>
+                            <RechartsTooltip />
+                            <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: 13 }} />
+                        </PieChart>
+                    </ResponsiveContainer>
+                </div>
+            );
+        };
+
+        // 圖表：類別分佈（前 8 名，其餘併入「其他」）
+        const CategoryBar = ({ issues, height = 240 }) => {
+            const data = useMemo(() => {
+                const c = {};
+                issues.forEach(i => { c[i.category] = (c[i.category] || 0) + 1; });
+                const arr = Object.entries(c).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
+                if (arr.length > 8) { const rest = arr.slice(7).reduce((s, x) => s + x.count, 0); return [...arr.slice(0, 7), { name: '其他', count: rest }]; }
+                return arr;
+            }, [issues]);
+            if (!data.length) return <p className="text-slate-400 text-sm text-center py-8">無資料</p>;
+            return (
+                <div style={{ height }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={data} layout="vertical" margin={{ top: 4, right: 36, left: 8, bottom: 4 }}>
+                            <XAxis type="number" hide allowDecimals={false} />
+                            <YAxis dataKey="name" type="category" width={110} tick={{ fontSize: 12 }} />
+                            <RechartsTooltip cursor={{ fill: 'rgba(0,0,0,.03)' }} />
+                            <Bar dataKey="count" name="件數" fill={COLORS.primary} radius={[0, 6, 6, 0]} barSize={18}><LabelList dataKey="count" position="right" fontSize={12} fill="#666" /></Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            );
+        };
+
+        // 圖表：年度趨勢
+        const YearTrend = ({ yearStats, height = 240 }) => (
+            <div style={{ height }}>
+                <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={yearStats} margin={{ top: 16, right: 8, left: -16, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                        <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+                        <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                        <RechartsTooltip cursor={{ fill: 'rgba(0,0,0,.03)' }} />
+                        <Legend wrapperStyle={{ fontSize: 13 }} />
+                        <Bar dataKey="issues" name="提案數" fill={COLORS.primary} radius={[4, 4, 0, 0]} barSize={28}><LabelList dataKey="issues" position="top" fontSize={11} fill="#666" /></Bar>
+                        <Bar dataKey="closed" name="已結案" fill={COLORS.secondary} radius={[4, 4, 0, 0]} barSize={28}><LabelList dataKey="closed" position="top" fontSize={11} fill="#666" /></Bar>
+                    </BarChart>
+                </ResponsiveContainer>
+            </div>
+        );
+
+        // 場次卡片
+        const MeetingCard = ({ m, issues, attendance }) => {
+            const mi = issues.filter(i => i.meetingId === m.id);
+            const closed = mi.filter(i => i.status === '已結案').length;
+            const res = attendance.filter(a => a.meetingId === m.id && a.isResident).length;
+            const isFuture = m.id > todayKey();
+            return (
+                <button onClick={() => go(`#/meeting/${m.id}`)} className="text-left bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-[#6B859E]/40 transition-all p-5 w-full print-card">
+                    <div className="flex items-center justify-between mb-3">
+                        <span className="font-mono font-bold text-lg text-slate-800">{toROC(m.id)}</span>
+                        {isFuture ? <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">尚未舉行</span> : <span className="text-xs text-slate-400">{m.time}</span>}
+                    </div>
+                    <div className="text-sm text-slate-500 flex items-center gap-1 mb-4 truncate"><Icons.MapPin size={14} /> {m.location || '地點未填'}</div>
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                        <div className="bg-slate-50 rounded-lg py-2"><div className="text-xl font-bold text-slate-700">{res}</div><div className="text-[11px] text-slate-400">住院醫師</div></div>
+                        <div className="bg-slate-50 rounded-lg py-2"><div className="text-xl font-bold text-slate-700">{mi.length}</div><div className="text-[11px] text-slate-400">提案</div></div>
+                        <div className="bg-slate-50 rounded-lg py-2"><div className="text-xl font-bold" style={{ color: COLORS.secondary }}>{closed}</div><div className="text-[11px] text-slate-400">已結案</div></div>
+                    </div>
+                </button>
+            );
+        };
+
+        // 照片（自動嘗試副檔名）
+        const Photo = ({ base, idx }) => {
+            const [extIdx, setExtIdx] = useState(0);
+            const [dead, setDead] = useState(false);
+            if (dead) return null;
+            const src = `${PHOTO_BASE}${base}.${PHOTO_EXTS[extIdx]}`;
+            return (
+                <div className="aspect-[4/3] rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow cursor-pointer group bg-slate-100">
+                    <img src={src} alt={`會議照片 ${idx + 1}`} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        onClick={() => window.open(src, '_blank')}
+                        onError={() => extIdx < PHOTO_EXTS.length - 1 ? setExtIdx(extIdx + 1) : setDead(true)} />
+                </div>
+            );
+        };
+
+        // =====================================================================
+        //  頁面：總覽
+        // =====================================================================
+        const OverviewPage = ({ issues, meetings, attendance, years, yearStats, onSelect }) => {
+            const held = meetings.filter(m => m.id <= todayKey());
+            const closed = issues.filter(i => i.status === '已結案').length;
+            const open = issues.length - closed;
+            const rate = issues.length ? Math.round(closed / issues.length * 100) : 0;
+            const latest = [...held].sort((a, b) => b.id.localeCompare(a.id))[0];
+            return (
+                <div className="animate-fade-in space-y-6">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                        <StatCard title="累計辦理場次" value={held.length} unit="場" subtext={latest ? `最近一場 ${toROC(latest.id)}` : ''} icon={Icons.Calendar} color={COLORS.primary} />
+                        <StatCard title="累計提案" value={issues.length} unit="案" subtext={`跨 ${years.length} 個年度`} icon={Icons.FileText} color={COLORS.primary} />
+                        <StatCard title="結案率" value={rate} unit="%" subtext={`已結案 ${closed} 案`} icon={Icons.CheckCircle2} color={COLORS.secondary} />
+                        <StatCard title="未結案" value={open} unit="案" subtext="進行中＋待決議" icon={Icons.Clock} color={COLORS.accent} />
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <Card title="年度趨勢" icon={Icons.TrendingUp} className="lg:col-span-2"><YearTrend yearStats={yearStats} /></Card>
+                        <Card title="案件狀態分佈" icon={Icons.Filter}><StatusDonut issues={issues} height={240} /></Card>
+                    </div>
+
+                    <Card title="年度總覽" icon={Icons.Calendar}>
+                        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+                            {[...yearStats].reverse().map(y => (
+                                <button key={y.year} onClick={() => go(`#/year/${y.year}`)} className="text-left rounded-xl border border-slate-100 bg-slate-50 hover:bg-white hover:border-[#6B859E]/40 hover:shadow-sm transition-all p-4">
+                                    <div className="font-bold text-slate-800 mb-1">民國 {y.year} 年</div>
+                                    <div className="text-xs text-slate-500">{y.meetings} 場 · {y.issues} 案</div>
+                                    <div className="text-xs mt-1" style={{ color: COLORS.secondary }}>結案率 {y.rate}%</div>
+                                </button>
+                            ))}
+                        </div>
+                    </Card>
+
+                    <IssueTable title="待處理議題（未結案）" issues={issues} meetings={meetings} years={years} defaultOpenOnly onSelect={onSelect} />
+                </div>
+            );
+        };
+
+        // =====================================================================
+        //  頁面：年度
+        // =====================================================================
+        const YearPage = ({ year, issues, meetings, attendance, years, onSelect }) => {
+            const yIssues = issues.filter(i => i.year === year);
+            const yMeetings = meetings.filter(m => rocYear(m.id) === year).sort((a, b) => a.id.localeCompare(b.id));
+            const held = yMeetings.filter(m => m.id <= todayKey());
+            const closed = yIssues.filter(i => i.status === '已結案').length;
+            const resAtt = attendance.filter(a => a.year === year && a.isResident).length;
+            const closeDays = yIssues.map(i => daysBetween(i.submitDate, i.closeDate)).filter(d => d !== null && d >= 0);
+            const avgDays = closeDays.length ? Math.round(closeDays.reduce((a, b) => a + b, 0) / closeDays.length) : null;
+            const idx = years.indexOf(year);
+            return (
+                <div className="animate-fade-in space-y-6">
+                    <div className="flex items-center justify-between flex-wrap gap-3">
+                        <h2 className="text-2xl md:text-3xl font-bold text-slate-800">民國 {year} 年度 <span className="text-slate-400 font-normal text-lg">（西元 {year + 1911}）</span></h2>
+                        <div className="flex gap-2 no-print">
+                            {idx < years.length - 1 && <button onClick={() => go(`#/year/${years[idx + 1]}`)} className="px-3 py-1.5 text-sm rounded-lg border border-slate-200 bg-white hover:bg-slate-50 flex items-center gap-1"><Icons.ChevronLeft size={14} /> {years[idx + 1]} 年</button>}
+                            {idx > 0 && <button onClick={() => go(`#/year/${years[idx - 1]}`)} className="px-3 py-1.5 text-sm rounded-lg border border-slate-200 bg-white hover:bg-slate-50 flex items-center gap-1">{years[idx - 1]} 年 <Icons.ChevronRight size={14} /></button>}
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                        <StatCard title="辦理場次" value={held.length} unit="場" icon={Icons.Calendar} color={COLORS.primary} />
+                        <StatCard title="住院醫師出席" value={resAtt} unit="人次" icon={Icons.Users} color={COLORS.primary} />
+                        <StatCard title="提案數" value={yIssues.length} unit="案" icon={Icons.FileText} color={COLORS.primary} />
+                        <StatCard title="已結案" value={closed} unit="案" subtext={yIssues.length ? `結案率 ${Math.round(closed / yIssues.length * 100)}%` : ''} icon={Icons.CheckCircle2} color={COLORS.secondary} />
+                        <StatCard title="平均結案" value={avgDays ?? '-'} unit="天" icon={Icons.Clock} color={COLORS.accent} />
+                    </div>
+
+                    <Card title="本年度場次" icon={Icons.Calendar}>
+                        {yMeetings.length ? <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">{yMeetings.map(m => <MeetingCard key={m.id} m={m} issues={issues} attendance={attendance} />)}</div> : <p className="text-slate-400 text-sm">本年度尚無場次</p>}
+                    </Card>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <Card title="議題類別分析" icon={Icons.LayoutDashboard}><CategoryBar issues={yIssues} /></Card>
+                        <Card title="案件狀態分佈" icon={Icons.Filter}><StatusDonut issues={yIssues} height={240} /></Card>
+                    </div>
+
+                    <IssueTable title={`${year} 年度全部議題`} issues={yIssues} meetings={meetings} years={years} showYearFilter={false} onSelect={onSelect} />
+                </div>
+            );
+        };
+
+        // =====================================================================
+        //  頁面：單場座談會（保留原設計）
+        // =====================================================================
+        const MeetingPage = ({ meeting, issues, attendance, onSelect }) => {
+            const mIssues = issues.filter(i => i.meetingId === meeting.id);
+            const mAtt = attendance.filter(a => a.meetingId === meeting.id);
+            const residents = mAtt.filter(p => p.isResident);
+            const byRole = (r) => mAtt.filter(p => p['職級'] === r).map(p => ({ name: p['姓名'], title: p['職稱'] }));
+            const groups = [['主席', byRole('主席')], ['指導長官', byRole('指導長官')], ['教學主管', byRole('教學主管')], ['列席主管', byRole('列席主管')], ['教學負責人', byRole('教學負責人')]].filter(g => g[1].length);
+            const depts = [...new Set(residents.map(r => r['科別名'] || r['科別'] || '').filter(Boolean))];
+            const photos = Array.from({ length: meeting.photoCount || 0 }, (_, i) => `photos/${meeting.id}_${String(i + 1).padStart(2, '0')}`);
+            const year = rocYear(meeting.id);
+
+            return (
+                <div className="animate-fade-in space-y-6">
+                    <button onClick={() => go(`#/year/${year}`)} className="text-sm text-slate-500 hover:text-slate-800 flex items-center gap-1 no-print"><Icons.ChevronLeft size={16} /> 回到 {year} 年度</button>
                     <div className="bg-gradient-to-r from-[#6B859E] to-[#556b80] rounded-2xl p-6 text-white shadow-lg">
-                        <div className="flex flex-wrap items-center gap-4 mb-4 opacity-90 text-base">
-                            <Icons.Calendar size={18} /> {meeting.displayDate} {meeting.time}
-                            <span className="mx-2 hidden md:inline">|</span>
-                            <span className="block md:inline w-full md:w-auto mt-1 md:mt-0">地點：{meeting.location}</span>
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-3 opacity-90 text-sm">
+                            <span className="flex items-center gap-1.5"><Icons.Calendar size={16} /> {toROCLong(meeting.id)} {meeting.time}</span>
+                            <span className="flex items-center gap-1.5"><Icons.MapPin size={16} /> {meeting.location || '地點未填'}</span>
                         </div>
-                        <h2 className="text-3xl md:text-4xl font-bold mb-6">{meeting.id}座談會</h2>
+                        <h2 className="text-3xl md:text-4xl font-bold mb-6">{toROC(meeting.id)} 住院醫師座談會</h2>
                         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                            <div className="bg-white/10 backdrop-blur-sm px-4 py-3 rounded-xl border border-white/20">
-                                <div className="flex items-center gap-2 mb-1 opacity-90 text-sm"><Icons.Users size={16} /> 住院醫師出席數</div>
-                                <span className="text-3xl font-bold">{stats.residentCount} <span className="text-base font-normal">人</span></span>
-                            </div>
-                            <div className="bg-white/10 backdrop-blur-sm px-4 py-3 rounded-xl border border-white/20">
-                                <div className="flex items-center gap-2 mb-1 opacity-90 text-sm"><Icons.FileText size={16} /> 提案數量</div>
-                                <span className="text-3xl font-bold">{stats.totalIssues} <span className="text-base font-normal">案</span></span>
-                            </div>
-                            <div className="bg-white/10 backdrop-blur-sm px-4 py-3 rounded-xl border border-white/20 col-span-2 md:col-span-2 lg:col-span-4">
-                                <div className="flex items-center gap-2 mb-2 opacity-90 text-sm"><Icons.Stethoscope size={16} /> 住院醫師科別</div>
-                                <div className="flex flex-wrap gap-2">
-                                    {stats.residentDepts.length > 0 ? stats.residentDepts.map((d, i) => <span key={i} className="text-sm bg-white/20 px-2.5 py-1 rounded text-white whitespace-nowrap">{d}</span>) : <span className="text-sm opacity-60">無資料</span>}
-                                </div>
-                            </div>
-                            <div className="bg-white/10 backdrop-blur-sm px-4 py-3 rounded-xl border border-white/20 col-span-2 md:col-span-4 lg:col-span-6">
-                                <div className="flex items-center gap-2 mb-2 opacity-90 text-sm"><Icons.UserCheck size={16} /> 出席長官</div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
-                                    {stats.chairs.length > 0 && <div><span className="text-xs text-white/70 block mb-1">主席</span><div className="flex flex-wrap gap-1.5">{stats.chairs.map((p, i) => <span key={i} className="text-sm bg-[#D6A28D]/90 px-2 py-0.5 rounded text-white">{p.name} {p.title}</span>)}</div></div>}
-                                    {stats.advisors.length > 0 && <div><span className="text-xs text-white/70 block mb-1">指導長官</span><div className="flex flex-wrap gap-1.5">{stats.advisors.map((p, i) => <span key={i} className="text-sm bg-[#D6A28D]/90 px-2 py-0.5 rounded text-white">{p.name} {p.title}</span>)}</div></div>}
-                                    {stats.teachingSups.length > 0 && <div><span className="text-xs text-white/70 block mb-1">教學主管</span><div className="flex flex-wrap gap-1.5">{stats.teachingSups.map((p, i) => <span key={i} className="text-sm bg-[#D6A28D]/90 px-2 py-0.5 rounded text-white">{p.name} {p.title}</span>)}</div></div>}
-                                    {stats.attendingSups.length > 0 && <div><span className="text-xs text-white/70 block mb-1">列席主管</span><div className="flex flex-wrap gap-1.5">{stats.attendingSups.map((p, i) => <span key={i} className="text-sm bg-[#D6A28D]/90 px-2 py-0.5 rounded text-white">{p.name} {p.title}</span>)}</div></div>}
-                                    {stats.coordinators.length > 0 && <div><span className="text-xs text-white/70 block mb-1">教學負責人</span><div className="flex flex-wrap gap-1.5">{stats.coordinators.map((p, i) => <span key={i} className="text-sm bg-[#D6A28D]/90 px-2 py-0.5 rounded text-white">{p.name} {p.title}</span>)}</div></div>}
-                                </div>
-                            </div>
+                            <div className="bg-white/10 backdrop-blur-sm px-4 py-3 rounded-xl border border-white/20"><div className="flex items-center gap-2 mb-1 opacity-90 text-sm"><Icons.Users size={16} /> 住院醫師出席</div><span className="text-3xl font-bold">{residents.length} <span className="text-base font-normal">人</span></span></div>
+                            <div className="bg-white/10 backdrop-blur-sm px-4 py-3 rounded-xl border border-white/20"><div className="flex items-center gap-2 mb-1 opacity-90 text-sm"><Icons.FileText size={16} /> 提案數量</div><span className="text-3xl font-bold">{mIssues.length} <span className="text-base font-normal">案</span></span></div>
+                            <div className="bg-white/10 backdrop-blur-sm px-4 py-3 rounded-xl border border-white/20 col-span-2 lg:col-span-4"><div className="flex items-center gap-2 mb-2 opacity-90 text-sm"><Icons.Stethoscope size={16} /> 住院醫師科別</div><div className="flex flex-wrap gap-2">{depts.length ? depts.map((d, i) => <span key={i} className="text-sm bg-white/20 px-2.5 py-1 rounded whitespace-nowrap">{d}</span>) : <span className="text-sm opacity-60">無資料</span>}</div></div>
+                            {groups.length > 0 && <div className="bg-white/10 backdrop-blur-sm px-4 py-3 rounded-xl border border-white/20 col-span-2 md:col-span-4 lg:col-span-6"><div className="flex items-center gap-2 mb-2 opacity-90 text-sm"><Icons.UserCheck size={16} /> 出席長官</div><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">{groups.map(([label, ps]) => <div key={label}><span className="text-xs text-white/70 block mb-1">{label}</span><div className="flex flex-wrap gap-1.5">{ps.map((p, i) => <span key={i} className="text-sm bg-[#D6A28D]/90 px-2 py-0.5 rounded">{p.name} {p.title}</span>)}</div></div>)}</div></div>}
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-100">
-                        <div className="p-8 border-b border-slate-100 sticky top-0 bg-white z-10 rounded-t-2xl">
-                            <h3 className="font-bold text-2xl text-slate-700 flex items-center gap-3">
-                                <Icons.FileText className="text-slate-400" size={28} /> 本場次決議成效追蹤
-                            </h3>
-                        </div>
-                        <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-                            {meetingIssues.length > 0 ? meetingIssues.map((issue, idx) => (
-                                <div key={idx} className="border border-slate-200 rounded-xl p-8 bg-slate-50/50 flex flex-col h-full hover:border-slate-300 transition-all">
-                                    <div className="flex justify-between items-start mb-5">
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-base font-bold text-slate-500 bg-white border px-3 py-1 rounded">#{issue.id}</span>
-                                            <span className="text-lg font-semibold text-slate-600">{issue.category}</span>
+                    <Card title="本場次決議成效追蹤" icon={Icons.FileText}>
+                        {mIssues.length ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {mIssues.map(issue => (
+                                    <div key={issue.key} className="border border-slate-200 rounded-xl p-6 bg-slate-50/50 flex flex-col hover:border-slate-300 transition-all">
+                                        <div className="flex justify-between items-start mb-4 gap-2">
+                                            <div className="flex items-center gap-2 flex-wrap"><span className="text-sm font-bold text-slate-500 bg-white border px-2.5 py-0.5 rounded">#{issue.id}</span><span className="text-base font-semibold text-slate-600">{issue.category}</span></div>
+                                            <StatusBadge status={issue.status} />
                                         </div>
-                                        <StatusBadge status={issue.status} />
-                                    </div>
-                                    <h4 className="text-2xl font-bold text-slate-800 mb-6 flex-grow leading-tight">{issue.goal}</h4>
-                                    <TrackingTimeline issue={issue} />
-                                    <div className="grid grid-cols-2 gap-6 text-lg text-slate-600 mb-6 bg-white p-5 rounded-lg border border-slate-100">
-                                        <div><span className="block text-sm text-slate-400 mb-1.5">提案者</span>{issue.proposer}</div>
-                                        <div><span className="block text-sm text-slate-400 mb-1.5">負責窗口 (PIC)</span>{issue.pic || '-'}</div>
-                                    </div>
-                                    <div className="flex items-start gap-4 bg-[#F8F9FA] p-5 rounded-lg border-l-4 mt-auto" style={{ borderLeftColor: COLORS.primary }}>
-                                        <div className="mt-1 text-slate-400 flex-shrink-0"><Icons.ChevronRight size={20} /></div>
-                                        <div>
-                                            <span className="block text-base font-bold text-slate-500 mb-1">
-                                                {issue.progress ? '最新進度' : '會議決議'}
-                                            </span>
-                                            <p className="text-lg text-slate-700 leading-relaxed">{issue.progress || issue.resolution || '尚無資料'}</p>
+                                        <h4 className="text-xl font-bold text-slate-800 mb-4 leading-snug">{issue.goal}</h4>
+                                        <div className="grid grid-cols-2 gap-4 text-sm text-slate-600 mb-4 bg-white p-4 rounded-lg border border-slate-100">
+                                            <div><span className="block text-xs text-slate-400 mb-1">提案者</span>{issue.proposer || '-'}</div>
+                                            <div><span className="block text-xs text-slate-400 mb-1">負責單位／窗口</span>{issue.pic || '-'}{issue.contact ? ` / ${issue.contact}` : ''}</div>
                                         </div>
+                                        <div className="bg-white p-4 rounded-lg border border-slate-100 mb-4"><TimelineFull issue={issue} /></div>
+                                        <button onClick={() => onSelect(issue)} className="mt-auto self-end text-sm text-[#6B859E] hover:underline flex items-center gap-1 no-print">查看完整內容 <Icons.ChevronRight size={14} /></button>
                                     </div>
-                                </div>
-                            )) : (
-                                <div className="col-span-2 text-center py-12 text-slate-400">
-                                    <Icons.FileText size={48} className="mx-auto mb-4 opacity-50" />
-                                    <p className="text-xl">此場次尚無議題資料</p>
-                                    {trackingData.length > 0 && (
-                                        <details className="mt-6 text-left max-w-xl mx-auto text-xs">
-                                            <summary className="cursor-pointer text-slate-400 hover:text-slate-600">診斷資訊（若議題應存在卻未顯示，請點此展開檢查場次對應）</summary>
-                                            <div className="mt-3 bg-slate-50 border border-slate-200 rounded-lg p-4 font-mono space-y-1 max-h-64 overflow-auto">
-                                                <div className="text-slate-500 mb-2">本頁場次 ID：<span className="text-slate-800">{meeting.id}</span></div>
-                                                {trackingData.map((it, i) => (
-                                                    <div key={i} className={it.date === meeting.id ? 'text-green-600' : 'text-slate-400'}>
-                                                        序號 {it.id || '?'}：原始場次「{it.rawDate}」→ 解析「{it.date}」{it.date === meeting.id ? ' ✓ 符合本頁' : ''}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </details>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                                ))}
+                            </div>
+                        ) : <p className="text-center py-10 text-slate-400">此場次尚無議題資料</p>}
+                    </Card>
 
-                    {meeting.photos && meeting.photos.length > 0 && (
-                        <div className="bg-white rounded-2xl shadow-sm border border-slate-100">
-                            <div className="p-8 border-b border-slate-100">
-                                <h3 className="font-bold text-2xl text-slate-700 flex items-center gap-3">
-                                    <Icons.Camera className="text-slate-400" size={28} /> 會議紀錄照片
-                                </h3>
-                            </div>
-                            <div className="p-8">
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {meeting.photos.map((photo, idx) => (
-                                        <div key={idx} className="photo-cell aspect-[4/3] rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow cursor-pointer group">
-                                            <img
-                                                src={PHOTO_BASE + photo}
-                                                alt={`會議照片 ${idx + 1}`}
-                                                loading="lazy"
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                                onClick={() => window.open(PHOTO_BASE + photo, '_blank')}
-                                                onError={(e) => { const cell = e.target.closest('.photo-cell'); if (cell) cell.style.display = 'none'; }}
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
+                    {photos.length > 0 && (
+                        <Card title="會議紀錄照片" icon={Icons.Camera}>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{photos.map((p, i) => <Photo key={p} base={p} idx={i} />)}</div>
+                        </Card>
                     )}
                 </div>
             );
         };
 
-        const App = () => {
-            const [activeTab, setActiveTab] = useState('overview');
-            const [loading, setLoading] = useState(true);
-            const [isRefreshing, setIsRefreshing] = useState(false);
-            const [error, setError] = useState(null);
-            const [data, setData] = useState({ tracking: [], attendance: [], meta: {} });
-            const [lastUpdated, setLastUpdated] = useState(null);
+        // =====================================================================
+        //  頁面：評鑑報表
+        // =====================================================================
+        const ReportPage = ({ issues, meetings, attendance, years, yearStats, onSelect }) => {
+            const [from, setFrom] = useState(years[years.length - 1]);
+            const [to, setTo] = useState(years[0]);
+            const inRange = (y) => y >= Math.min(from, to) && y <= Math.max(from, to);
+            const rIssues = issues.filter(i => inRange(i.year));
+            const rStats = yearStats.filter(s => inRange(s.year));
+            const highlights = rIssues.filter(i => i.highlight);
+            const tot = rStats.reduce((a, s) => ({ meetings: a.meetings + s.meetings, residents: a.residents + s.residents, issues: a.issues + s.issues, closed: a.closed + s.closed }), { meetings: 0, residents: 0, issues: 0, closed: 0 });
+            const sel = "text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white";
 
-            const fetchData = useCallback(async (isAutoRefresh = false) => {
-                try {
-                    if (!isAutoRefresh) setLoading(true);
-                    else setIsRefreshing(true);
-
-                    const response = await fetch(`${API_URL}?t=${new Date().getTime()}`);
-                    if (!response.ok) throw new Error('網路回應異常');
-                    const result = await response.json();
-                    
-                    setData(result);
-                    setLastUpdated(new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-                    setError(null);
-                } catch (err) {
-                    console.error("Fetch Error:", err);
-                    if (!isAutoRefresh) setError(err.message);
-                } finally {
-                    setLoading(false);
-                    setIsRefreshing(false);
-                }
-            }, []);
-
-            useEffect(() => {
-                fetchData();
-                const timer = setInterval(() => {
-                    fetchData(true);
-                }, REFRESH_INTERVAL);
-                return () => clearInterval(timer);
-            }, [fetchData]);
-
-            const trackingData = useMemo(() => {
-                const mapped = data.tracking.map(item => {
-                    // MODIFIED: 提取結案日期欄位值，用來作為最高優先級判斷
-                    const closeDateStr = item['結案日期'] || item['關閉日期'] || item['結案時間'] || '';
-                    
-                    // MODIFIED: 提取狀態文字欄位
-                    let rawStatus = (item['現狀'] || item['狀態'] || item['追蹤現狀'] || item['處理狀態'] || item['結案情形'] || '').toString();
-                    let status = '待決議';
-                    
-                    // MODIFIED: 優先權 1 - 只要有填寫「結案日期」，狀態強制為已結案
-                    if (closeDateStr && closeDateStr.trim() !== '') {
-                        status = '已結案';
-                    } 
-                    // MODIFIED: 優先權 2 - 文字判斷
-                    else if (rawStatus.includes('已結案') || rawStatus.includes('結案') || rawStatus.includes('完成') || rawStatus.includes('Close')) {
-                        status = '已結案';
-                    } else if (rawStatus.includes('進行中') || rawStatus.includes('開發中') || rawStatus.includes('評估') || rawStatus.includes('規劃') || rawStatus.includes('Ongoing')) {
-                        status = '進行中';
-                    } else if (rawStatus.includes('待決議') || rawStatus.includes('待') || rawStatus === '') {
-                        status = '待決議';
-                    }
-
-                    const proposer = item['提案者'] || '';
-                    const dept = proposer.includes('/') ? proposer.split('/')[0] : proposer;
-
-                    const meetingDate = normalizeMeetingId(item['場次'] || '');
-
-                    return {
-                        date: meetingDate,
-                        rawDate: item['場次'] || '',
-                        id: item['序號'] || '',
-                        category: item['議題類別'] || item['序號類別'] || '未分類',
-                        goal: item['具體目標'] || '',
-                        proposer: proposer,
-                        dept: dept,
-                        pic: item['負責單位'] || item['負責窗口'] || '',
-                        milestone: item['預計里程碑'] || '',
-                        status: status,
-                        progress: item['第一次追蹤摘要'] || item['追蹤報告'] || '',
-                        resolution: item['會議決議'] || item['會議/決議'] || '',
-                        submitDate: formatDate(item['提案日期'] || item['提獎日期']),
-                        deadline: formatDate(item['訂定完成期限']),
-                        progressPercent: item['進度百分比'] || '',
-                        track1Date: formatDate(item['第一次追蹤日期']),
-                        track1Summary: item['第一次追蹤摘要'] || '',
-                        track2Date: formatDate(item['第二次追蹤/延期日期'] || item['第二次追蹤日期'] || item['第二次追蹤/延期/關閉日期']),
-                        track2Summary: item['第二次追蹤摘要'] || '',
-                        track3Date: formatDate(item['第三次追蹤/延期日期'] || item['第三次追蹤日期']),
-                        track3Summary: item['第三次追蹤摘要'] || '',
-                        updateDate: formatDate(item['第一次追蹤日期'] || item['追蹤日期']),
-                        closeDate: formatDate(closeDateStr)
-                    };
-                });
-
-                const getStatusWeight = (status) => {
-                    if (status.includes('待決議')) return 1;
-                    if (status.includes('進行中')) return 2;
-                    if (status.includes('已結案')) return 3;
-                    return 4;
-                };
-
-                return mapped.sort((a, b) => getStatusWeight(a.status) - getStatusWeight(b.status));
-            }, [data.tracking]);
-
-            // 出席名單完全以 Google Sheet「出席名單」工作表為唯一來源
-            const mergedAttendance = useMemo(() => data.attendance || [], [data.attendance]);
-
-            const overviewStats = useMemo(() => {
-                const total = trackingData.length;
-                const completed = trackingData.filter(i => i.status.includes('已結案')).length;
-                const inProgress = trackingData.filter(i => i.status.includes('進行中')).length;
-                const pending = trackingData.filter(i => i.status.includes('待決議')).length;
-
-                const pieData = [
-                    { name: '已結案', value: completed, color: COLORS.secondary },
-                    { name: '進行中', value: inProgress, color: COLORS.accent },
-                    { name: '待決議', value: pending, color: COLORS.warning },
-                ].filter(d => d.value > 0);
-
-                const categoryCount = trackingData.reduce((acc, curr) => {
-                    const cat = curr.category || '未分類';
-                    acc[cat] = (acc[cat] || 0) + 1;
-                    return acc;
-                }, {});
-
-                const barData = Object.keys(categoryCount).map(key => ({
-                    name: key, count: categoryCount[key]
-                }));
-
-                return { total, completed, inProgress, pending, pieData, barData };
-            }, [trackingData]);
-
-            if (loading) return <div className="min-h-screen flex flex-col items-center justify-center space-y-4 bg-[#F5F5F3]"><div className="animate-spin text-slate-400"><Icons.Loader2 size={48} /></div><p className="text-xl text-slate-500 font-medium">即時資料同步中，請稍候...</p></div>;
-            if (error) return <div className="min-h-screen flex flex-col items-center justify-center space-y-4 bg-[#F5F5F3]"><div className="text-red-500"><Icons.AlertCircle size={48} /></div><h3 className="text-2xl font-bold text-slate-700">資料載入失敗</h3><p className="text-lg text-slate-500">{error}</p><button onClick={() => fetchData()} className="px-6 py-3 bg-slate-200 rounded-lg text-slate-600 hover:bg-slate-300 text-lg">重新嘗試</button></div>;
+            const exportCSV = () => {
+                const head = ['年度', '場次', '序號', '議題類別', '具體目標', '提案者', '負責單位', '負責窗口', '狀態', '提案日期', '會議決議', '第一次追蹤日期', '第一次追蹤摘要', '第二次追蹤日期', '第二次追蹤摘要', '第三次追蹤日期', '第三次追蹤摘要', '結案日期', '結案說明', '結案歷時(天)'];
+                const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+                const rows = rIssues.map(i => [i.year, toROC(i.meetingId), i.id, i.category, i.goal, i.proposer, i.pic, i.contact, i.status, toROC(i.submitDate), i.resolution, toROC(i.track1Date), i.track1Summary, toROC(i.track2Date), i.track2Summary, toROC(i.track3Date), i.track3Summary, toROC(i.closeDate), i.closeNote, daysBetween(i.submitDate, i.closeDate) ?? ''].map(esc).join(','));
+                const blob = new Blob(['﻿' + [head.map(esc).join(','), ...rows].join('\r\n')], { type: 'text/csv;charset=utf-8' });
+                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `住院醫師座談會議題_${from}-${to}年.csv`; a.click();
+            };
 
             return (
-                <div className="min-h-screen font-sans bg-[#F5F5F3] flex flex-col">
-                    <nav className="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-20">
-                        {/* 第一列：標題 + 同步狀態 + 重新整理（響應式：窄螢幕自動換行、標題不擠壓變直排） */}
-                        <div className="max-w-[95%] mx-auto pt-3 md:pt-4 flex items-center justify-between gap-3">
-                            <div className="flex items-center gap-2.5 md:gap-3 min-w-0">
-                                <div className="p-2 md:p-2.5 rounded-lg text-white flex-shrink-0" style={{ backgroundColor: COLORS.primary }}><Icons.LayoutDashboard size={22} /></div>
-                                <h1 className="text-lg md:text-2xl font-bold tracking-tight whitespace-nowrap truncate" style={{ color: COLORS.text }}>
-                                    住院醫師座談會
-                                    <span className="hidden sm:inline text-slate-400 font-normal text-sm md:text-base ml-2 md:ml-3">成效追蹤儀表板</span>
-                                </h1>
-                            </div>
-                            <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
-                                <div className="hidden sm:flex items-center gap-1.5 text-xs font-medium text-slate-400 whitespace-nowrap">
-                                    {isRefreshing ? <Icons.RefreshCw size={12} className="animate-spin text-blue-400" /> : <div className="w-2 h-2 rounded-full bg-green-500"></div>}
-                                    {isRefreshing ? "同步中..." : `已同步 ${lastUpdated}`}
-                                </div>
-                                <button
-                                    onClick={() => fetchData(true)}
-                                    disabled={isRefreshing}
-                                    className={`p-2 rounded-lg border border-slate-200 hover:bg-slate-50 transition-all ${isRefreshing ? 'bg-blue-50 cursor-wait' : 'bg-white'}`}
-                                    title="立刻強制重新整理 Sheet"
-                                >
-                                    <Icons.RefreshCw size={16} className={isRefreshing ? "animate-spin text-blue-500" : "text-slate-500"} />
-                                </button>
-                            </div>
+                <div className="animate-fade-in space-y-6">
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                        <div>
+                            <h2 className="text-2xl md:text-3xl font-bold text-slate-800">住院醫師座談會成效報表</h2>
+                            <p className="text-slate-500 text-sm mt-1">民國 {Math.min(from, to)} 年 ～ {Math.max(from, to)} 年 · 產出日期 {toROC(todayKey())}</p>
                         </div>
-                        {/* 第二列：分頁列（簡約底線式，窄螢幕可橫向滑動） */}
-                        <div className="max-w-[95%] mx-auto mt-2 md:mt-3 overflow-x-auto custom-scrollbar">
-                            <div className="flex gap-4 md:gap-8 min-w-max">
-                                <button onClick={() => setActiveTab('overview')} className={`pb-2.5 pt-1 text-sm md:text-base whitespace-nowrap border-b-2 transition-colors ${activeTab === 'overview' ? 'border-[#6B859E] text-slate-800 font-bold' : 'border-transparent text-slate-400 font-medium hover:text-slate-600'}`}>總覽</button>
-                                {MEETINGS.map(m => (
-                                    <button key={m.id} onClick={() => setActiveTab(m.id)} className={`pb-2.5 pt-1 text-sm md:text-base whitespace-nowrap border-b-2 transition-colors ${activeTab === m.id ? 'border-[#6B859E] text-slate-800 font-bold' : 'border-transparent text-slate-400 font-medium hover:text-slate-600'}`}>{m.date}</button>
+                        <div className="flex flex-wrap items-center gap-2 no-print">
+                            <select value={from} onChange={e => setFrom(+e.target.value)} className={sel}>{years.map(y => <option key={y} value={y}>{y} 年</option>)}</select>
+                            <span className="text-slate-400">～</span>
+                            <select value={to} onChange={e => setTo(+e.target.value)} className={sel}>{years.map(y => <option key={y} value={y}>{y} 年</option>)}</select>
+                            <button onClick={exportCSV} className="px-3 py-2 text-sm rounded-lg border border-slate-200 bg-white hover:bg-slate-50 flex items-center gap-1.5"><Icons.Download size={16} /> 匯出 CSV</button>
+                            <button onClick={() => window.print()} className="px-3 py-2 text-sm rounded-lg text-white flex items-center gap-1.5" style={{ backgroundColor: COLORS.primary }}><Icons.Printer size={16} /> 列印 / 存成 PDF</button>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <StatCard title="辦理場次" value={tot.meetings} unit="場" icon={Icons.Calendar} color={COLORS.primary} />
+                        <StatCard title="住院醫師出席" value={tot.residents} unit="人次" icon={Icons.Users} color={COLORS.primary} />
+                        <StatCard title="提案數" value={tot.issues} unit="案" icon={Icons.FileText} color={COLORS.primary} />
+                        <StatCard title="結案率" value={tot.issues ? Math.round(tot.closed / tot.issues * 100) : 0} unit="%" subtext={`已結案 ${tot.closed} 案`} icon={Icons.CheckCircle2} color={COLORS.secondary} />
+                    </div>
+
+                    <Card title="逐年統計" icon={Icons.Calendar}>
+                        <div className="overflow-x-auto -mx-6 px-6">
+                            <table className="w-full text-sm border-collapse">
+                                <thead className="bg-slate-50 text-slate-600 text-xs"><tr>{['年度', '場次', '住院醫師出席人次', '提案數', '已結案', '進行中', '待決議', '結案率', '平均結案天數'].map(h => <th key={h} className="p-3 font-bold text-left whitespace-nowrap">{h}</th>)}</tr></thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {rStats.map(s => (
+                                        <tr key={s.year} className="hover:bg-slate-50">
+                                            <td className="p-3 font-bold">民國 {s.year} 年</td><td className="p-3">{s.meetings}</td><td className="p-3">{s.residents}</td><td className="p-3">{s.issues}</td>
+                                            <td className="p-3" style={{ color: COLORS.secondary }}>{s.closed}</td><td className="p-3">{s.inProgress}</td><td className="p-3">{s.pending}</td>
+                                            <td className="p-3 font-semibold">{s.rate}%</td><td className="p-3">{s.avgDays ?? '-'}</td>
+                                        </tr>
+                                    ))}
+                                    <tr className="bg-slate-50 font-bold"><td className="p-3">合計</td><td className="p-3">{tot.meetings}</td><td className="p-3">{tot.residents}</td><td className="p-3">{tot.issues}</td><td className="p-3">{tot.closed}</td><td className="p-3">{rIssues.filter(i => i.status === '進行中').length}</td><td className="p-3">{rIssues.filter(i => i.status === '待決議').length}</td><td className="p-3">{tot.issues ? Math.round(tot.closed / tot.issues * 100) : 0}%</td><td className="p-3">-</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </Card>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <Card title="年度趨勢" icon={Icons.TrendingUp}><YearTrend yearStats={rStats} /></Card>
+                        <Card title="議題類別分佈" icon={Icons.LayoutDashboard}><CategoryBar issues={rIssues} /></Card>
+                    </div>
+
+                    <Card title="代表性改善案例" icon={Icons.Star} right={<span className="text-xs text-slate-400 no-print">在 Sheet「評鑑重點」欄打 ✓ 即會出現於此</span>}>
+                        {highlights.length ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {highlights.map(i => (
+                                    <div key={i.key} onClick={() => onSelect(i)} className="border border-slate-200 rounded-xl p-5 bg-slate-50/50 cursor-pointer hover:border-[#6B859E]/40">
+                                        <div className="flex items-center justify-between gap-2 mb-2"><span className="text-xs font-mono text-slate-500">{toROC(i.meetingId)} #{i.id} · {i.category}</span><StatusBadge status={i.status} small /></div>
+                                        <h4 className="font-bold text-slate-800 mb-2">{i.goal}</h4>
+                                        <p className="text-sm text-slate-600 line-clamp-3">{i.closeNote || i.latest || i.resolution}</p>
+                                    </div>
                                 ))}
                             </div>
-                        </div>
-                    </nav>
+                        ) : <p className="text-slate-400 text-sm">尚未標記代表性案例。在 Google Sheet「現況追蹤」新增一欄「評鑑重點」，想呈現的案例填 ✓ 即可。</p>}
+                    </Card>
 
-                    <main className="p-4 md:p-10 max-w-[95%] mx-auto space-y-6 md:space-y-10 flex-grow w-full">
-                        {activeTab === 'overview' && (
-                            <div className="animate-fade-in space-y-8">
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                    <StatCard title="總提案數" value={overviewStats.total} icon={Icons.FileText} color={COLORS.primary} subtext="累計至目前所有場次" />
-                                    <StatCard title="已結案" value={overviewStats.completed} icon={Icons.CheckCircle2} color={COLORS.secondary} subtext="達成率追蹤" />
-                                    <StatCard title="進行中" value={overviewStats.inProgress} icon={Icons.Clock} color={COLORS.accent} subtext="按進度執行中" />
-                                    <StatCard title="待決議" value={overviewStats.pending} icon={Icons.HelpCircle} color={COLORS.warning} subtext="需跨部門協調" />
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                                        <h3 className="font-bold text-lg mb-4 flex items-center gap-2 text-slate-700"><Icons.Filter size={20} /> 案件狀態分佈</h3>
-                                        <div className="h-48 w-full">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <PieChart>
-                                                    <Pie
-                                                        data={overviewStats.pieData}
-                                                        innerRadius={50}
-                                                        outerRadius={70}
-                                                        paddingAngle={5}
-                                                        dataKey="value"
-                                                        label={({ name, value }) => `${name}: ${value}`}
-                                                        labelLine={{ strokeWidth: 1 }}
-                                                        style={{ fontSize: '14px', fontWeight: '500' }}
-                                                    >
-                                                        {overviewStats.pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
-                                                    </Pie>
-                                                    <RechartsTooltip />
-                                                    <Legend verticalAlign="bottom" height={36} wrapperStyle={{ fontSize: '16px' }} />
-                                                </PieChart>
-                                            </ResponsiveContainer>
-                                        </div>
-                                    </div>
-                                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                                        <h3 className="font-bold text-lg mb-4 flex items-center gap-2 text-slate-700"><Icons.LayoutDashboard size={20} /> 議題類別分析</h3>
-                                        <div className="h-48 w-full">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <BarChart data={overviewStats.barData} layout="vertical" margin={{ top: 5, right: 40, left: 40, bottom: 5 }}>
-                                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                                                    <XAxis type="number" hide />
-                                                    <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 14 }} />
-                                                    <RechartsTooltip cursor={{ fill: 'transparent' }} />
-                                                    <Bar dataKey="count" fill={COLORS.primary} radius={[0, 6, 6, 0]} barSize={24}>
-                                                        <LabelList dataKey="count" position="right" fill="#666" fontSize={14} fontWeight="bold" />
-                                                    </Bar>
-                                                </BarChart>
-                                            </ResponsiveContainer>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                                    <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0">
-                                        <h3 className="font-bold text-2xl text-slate-700">全院議題追蹤清單</h3>
-                                        <div className={`flex items-center gap-2 text-sm px-4 py-2 rounded transition-colors ${isRefreshing ? 'text-blue-500 bg-blue-50' : 'text-slate-400 bg-slate-50'}`}>
-                                            {isRefreshing ? <Icons.RefreshCw size={14} className="animate-spin" /> : <div className="w-1.5 h-1.5 rounded-full bg-green-500 sync-pulse"></div>}
-                                            {isRefreshing ? "正在讀取 Sheet 最新內容..." : "已顯示 Sheet 最新進度"}
-                                        </div>
-                                    </div>
-                                    {/* 新增/修改：加入 min-h-[400px] 確保當表格列數較少時，向上展開的 Tooltip 不會被此容器切斷 */}
-                                    <div className="overflow-x-auto min-h-[400px]">
-                                        <table className="w-full text-left border-collapse">
-                                            <thead className="bg-slate-50 text-slate-600 text-sm tracking-wider sticky top-0 z-10">
-                                                <tr>
-                                                    <th className="p-3 font-bold w-12 text-center" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>場次</th>
-                                                    <th className="p-3 font-bold w-12 text-center" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>狀態</th>
-                                                    <th className="p-3 font-bold w-20 hidden lg:table-cell" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>提出科別</th>
-                                                    <th className="p-4 font-bold w-24 hidden lg:table-cell">議題類別</th>
-                                                    <th className="p-4 font-bold">具體目標</th>
-                                                    <th className="p-4 font-bold hidden md:table-cell" style={{ minWidth: '280px' }}>追蹤時間軸</th>
-                                                    <th className="p-4 font-bold w-24 hidden lg:table-cell">負責單位</th>
-                                                    <th className="p-4 font-bold hidden xl:table-cell" style={{ minWidth: '300px' }}>追蹤報告/會議決議</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-slate-100 text-base">
-                                                {trackingData.map((item, index) => {
-                                                    const timePoints = [
-                                                        { label: '提案', date: item.submitDate, color: '#3b82f6', summary: '' },
-                                                        { label: '追蹤1', date: item.track1Date, color: '#f59e0b', summary: item.track1Summary || '' },
-                                                        { label: '追蹤2', date: item.track2Date, color: '#8b5cf6', summary: item.track2Summary || '' },
-                                                        { label: '追蹤3', date: item.track3Date, color: '#ec4899', summary: item.track3Summary || '' },
-                                                        { label: '結案', date: item.closeDate, color: '#22c55e', summary: '' },
-                                                    ].filter(p => p.date && p.date !== '');
-
-                                                    return (
-                                                        <tr key={index} className="hover:bg-slate-50/50 transition-colors">
-                                                            <td className="p-3 align-top text-slate-600 font-medium text-sm text-center" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>{item.date}</td>
-                                                            <td className="p-3 align-top text-center"><StatusBadge status={item.status} /></td>
-                                                            <td className="p-3 align-top text-slate-600 hidden lg:table-cell text-sm" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>{item.dept}</td>
-                                                            <td className="p-4 align-top text-slate-500 hidden lg:table-cell">{item.category}</td>
-                                                            <td className="p-4 align-top">
-                                                                <div className="font-bold text-slate-800 leading-snug">{item.goal}</div>
-                                                                <div className="lg:hidden mt-2 text-sm text-slate-400">
-                                                                    <span>{item.dept}</span> · <span>{item.category}</span>
-                                                                </div>
-                                                            </td>
-                                                            <td className="p-4 align-top hidden md:table-cell" style={{ minWidth: '280px' }}>
-                                                                {timePoints.length > 0 ? (
-                                                                    <div className="flex items-start gap-0">
-                                                                        {timePoints.map((point, idx) => (
-                                                                            <div key={idx} className="flex items-center group relative">
-                                                                                <div className="flex flex-col items-center min-w-[50px] cursor-pointer">
-                                                                                    <div
-                                                                                        className="w-3 h-3 rounded-full flex-shrink-0 shadow-sm hover:scale-150 transition-transform"
-                                                                                        style={{ backgroundColor: point.color }}
-                                                                                        title={point.summary ? `${point.label}\n${point.date}\n${point.summary}` : `${point.label}: ${point.date}`}
-                                                                                    />
-                                                                                    <span className="text-[10px] text-slate-500 mt-1 font-medium">{point.label}</span>
-                                                                                    <span className="text-[10px] text-slate-400">{point.date}</span>
-                                                                                </div>
-                                                                                {point.summary && (
-                                                                                    /* 新增/修改：大幅優化 Tooltip 的寬度 (min-w-[240px] max-w-[320px])、Padding (p-4) 與文字自動換行 (break-words leading-relaxed)，解決文字底部被切斷問題 */
-                                                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 hidden group-hover:block z-[100] pointer-events-none w-max min-w-[240px] max-w-[320px]">
-                                                                                        <div className="bg-slate-800 text-white text-[13px] rounded-xl p-4 shadow-2xl whitespace-pre-wrap break-words leading-relaxed border border-slate-700/80">
-                                                                                            <div className="font-bold mb-2 flex items-center gap-2" style={{ color: point.color || '#fbbf24' }}>
-                                                                                                <span className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: point.color || '#fbbf24' }}></span>
-                                                                                                {point.label}
-                                                                                            </div>
-                                                                                            <div className="text-slate-300 mb-2.5 font-mono text-xs bg-slate-900/60 inline-block px-2.5 py-1 rounded-md border border-slate-700/50">
-                                                                                                {point.date}
-                                                                                            </div>
-                                                                                            <div className="border-t border-slate-600/80 pt-3 mt-1 text-slate-100 text-left">
-                                                                                                {point.summary}
-                                                                                            </div>
-                                                                                        </div>
-                                                                                        {/* 加大倒三角形使其與新尺寸更搭配 */}
-                                                                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-800"></div>
-                                                                                    </div>
-                                                                                )}
-                                                                                {idx < timePoints.length - 1 && (
-                                                                                    <div className="w-4 h-0.5 bg-slate-300 -mt-4"></div>
-                                                                                )}
-                                                                            </div>
-                                                                        ))}
-                                                                    </div>
-                                                                ) : (
-                                                                    <span className="text-sm text-slate-400">尚無追蹤紀錄</span>
-                                                                )}
-                                                            </td>
-                                                            <td className="p-4 align-top text-slate-600 text-sm hidden lg:table-cell">
-                                                                {item.pic && <span className="font-medium">{item.pic}</span>}
-                                                            </td>
-                                                            <td className="p-4 align-top text-slate-600 text-sm hidden xl:table-cell" style={{ minWidth: '300px', maxWidth: '400px' }}>
-                                                                {item.progress && <div className="mb-2 whitespace-pre-wrap"><span className="font-semibold text-slate-700">追蹤:</span> {item.progress}</div>}
-                                                                {item.resolution && <div className="text-slate-500 whitespace-pre-wrap"><span className="font-semibold">決議:</span> {item.resolution}</div>}
-                                                            </td>
-                                                        </tr>
-                                                    );
-                                                })}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {MEETINGS.map(m => (
-                            activeTab === m.id && (
-                                <MeetingPage
-                                    key={m.id}
-                                    meeting={m}
-                                    trackingData={trackingData}
-                                    attendanceData={mergedAttendance}
-                                />
-                            )
-                        ))}
-                    </main>
-
-                    <footer className="bg-white border-t border-slate-200 py-6">
-                        <div className="max-w-[95%] mx-auto flex justify-between items-center text-slate-400 text-base font-medium px-4">
-                            <div>教學部 住院醫師組</div>
-                            <div className="text-sm text-slate-300 flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 rounded-full bg-blue-400"></div>
-                                每 60 秒與雲端同步一次
-                            </div>
-                        </div>
-                    </footer>
+                    <div className="print-break"></div>
+                    <IssueTable title="議題明細" issues={rIssues} meetings={meetings} years={years} onSelect={onSelect} />
                 </div>
             );
         };
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        // =====================================================================
+        //  App
+        // =====================================================================
+        const App = () => {
+            const [route, setRoute] = useState(parseHash());
+            const [loading, setLoading] = useState(true);
+            const [isRefreshing, setIsRefreshing] = useState(false);
+            const [error, setError] = useState(null);
+            const [raw, setRaw] = useState({ tracking: [], attendance: [], meetings: [] });
+            const [lastUpdated, setLastUpdated] = useState(null);
+            const [selected, setSelected] = useState(null);
+
+            useEffect(() => {
+                const onHash = () => setRoute(parseHash());
+                window.addEventListener('hashchange', onHash);
+                return () => window.removeEventListener('hashchange', onHash);
+            }, []);
+
+            const fetchData = useCallback(async (manual = false) => {
+                try {
+                    manual ? setIsRefreshing(true) : setLoading(true);
+                    const res = await fetch(`${API_URL}?t=${Date.now()}`);
+                    if (!res.ok) throw new Error('網路回應異常');
+                    const json = await res.json();
+                    if (json.error) throw new Error(json.error);
+                    setRaw({ tracking: json.tracking || [], attendance: json.attendance || [], meetings: json.meetings || [] });
+                    setLastUpdated(new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }));
+                    setError(null);
+                } catch (e) { console.error(e); setError(e.message); }
+                finally { setLoading(false); setIsRefreshing(false); }
+            }, []);
+            useEffect(() => { fetchData(); }, [fetchData]);
+
+            // ---- 場次：優先用 Sheet「場次清單」；沒有就從追蹤表/出席名單自動推出 ----
+            const meetings = useMemo(() => {
+                const map = new Map();
+                raw.meetings.forEach(m => {
+                    const id = toDateKey(m['場次ID'] || m['場次'] || m['日期']);
+                    if (!id) return;
+                    map.set(id, { id, time: cleanStr(m['時間']), location: cleanStr(m['地點']), photoCount: parseInt(m['照片數']) || 0, note: cleanStr(m['備註']) });
+                });
+                const known = new Set(map.keys());
+                [...raw.tracking, ...raw.attendance].forEach(r => {
+                    const id = toDateKey(r['場次'], known);
+                    if (id && !map.has(id)) map.set(id, { id, time: '', location: cleanStr(r['地點']), photoCount: 0, note: '' });
+                });
+                return [...map.values()].sort((a, b) => b.id.localeCompare(a.id));
+            }, [raw]);
+            const knownIds = useMemo(() => new Set(meetings.map(m => m.id)), [meetings]);
+
+            const issues = useMemo(() => raw.tracking.map((it, idx) => {
+                const meetingId = toDateKey(it['場次'], knownIds);
+                const D = (v) => fixDate(toDateKey(v), meetingId);
+                const closeDate = D(it['結案日期'] || it['關閉日期'] || it['結案時間']);
+                const rs = cleanStr(it['現狀'] || it['狀態'] || it['追蹤現狀'] || it['處理狀態']);
+                let status = '待決議';
+                if (closeDate || /結案|完成|close/i.test(rs)) status = '已結案';
+                else if (/進行|開發|評估|規劃|ongoing/i.test(rs)) status = '進行中';
+                const proposer = cleanStr(it['提案者']);
+                const t1 = cleanStr(it['第一次追蹤摘要']), t2 = cleanStr(it['第二次追蹤摘要']), t3 = cleanStr(it['第三次追蹤摘要']);
+                const hl = cleanStr(it['評鑑重點']);
+                return {
+                    key: `${meetingId}-${cleanStr(it['序號'])}-${idx}`,
+                    meetingId, year: rocYear(meetingId),
+                    id: cleanStr(it['序號']).replace(/\.0+$/, ''),
+                    category: cleanStr(it['議題類別']) || '未分類',
+                    goal: cleanStr(it['具體目標']), proposer,
+                    dept: proposer.includes('/') ? proposer.split('/')[0] : proposer,
+                    pic: cleanStr(it['負責單位']), contact: cleanStr(it['負責窗口']),
+                    status, resolution: cleanStr(it['會議決議']),
+                    submitDate: D(it['提案日期']) || meetingId,
+                    track1Date: D(it['第一次追蹤日期']), track1Summary: t1,
+                    track2Date: D(it['第二次追蹤日期'] || it['第二次追蹤/延期日期']), track2Summary: t2,
+                    track3Date: D(it['第三次追蹤日期'] || it['第三次追蹤/延期日期']), track3Summary: t3,
+                    closeDate, closeNote: cleanStr(it['結案說明']), note: cleanStr(it['備註']),
+                    latest: cleanStr(it['結案說明']) || t3 || t2 || t1 || cleanStr(it['會議決議']),
+                    highlight: !!hl && !/^(否|no|n|0|false|-)$/i.test(hl),
+                };
+            }).filter(i => i.meetingId).sort((a, b) => b.meetingId.localeCompare(a.meetingId) || (+a.id || 0) - (+b.id || 0)), [raw.tracking, knownIds]);
+
+            const attendance = useMemo(() => raw.attendance.map(a => {
+                const meetingId = toDateKey(a['場次'], knownIds);
+                const title = cleanStr(a['職稱']), role = cleanStr(a['職級']);
+                return { ...a, meetingId, year: rocYear(meetingId), isResident: role === '住院醫師' || RESIDENT_KEYWORDS.some(k => title.includes(k)) };
+            }).filter(a => a.meetingId), [raw.attendance, knownIds]);
+
+            const years = useMemo(() => [...new Set([...meetings.map(m => rocYear(m.id)), ...issues.map(i => i.year)])].filter(Boolean).sort((a, b) => b - a), [meetings, issues]);
+
+            const yearStats = useMemo(() => [...years].reverse().map(y => {
+                const yi = issues.filter(i => i.year === y);
+                const closed = yi.filter(i => i.status === '已結案').length;
+                const days = yi.map(i => daysBetween(i.submitDate, i.closeDate)).filter(d => d !== null && d >= 0);
+                return {
+                    year: y, label: `${y}年`,
+                    meetings: meetings.filter(m => rocYear(m.id) === y && m.id <= todayKey()).length,
+                    residents: attendance.filter(a => a.year === y && a.isResident).length,
+                    issues: yi.length, closed, inProgress: yi.filter(i => i.status === '進行中').length, pending: yi.filter(i => i.status === '待決議').length,
+                    rate: yi.length ? Math.round(closed / yi.length * 100) : 0,
+                    avgDays: days.length ? Math.round(days.reduce((a, b) => a + b, 0) / days.length) : null,
+                };
+            }), [years, issues, meetings, attendance]);
+
+            if (loading) return <div className="min-h-screen flex flex-col items-center justify-center space-y-4"><div className="animate-spin text-slate-400"><Icons.Loader2 size={48} /></div><p className="text-xl text-slate-500 font-medium">資料同步中，請稍候…</p></div>;
+            if (error) return <div className="min-h-screen flex flex-col items-center justify-center space-y-4"><div className="text-red-500"><Icons.AlertCircle size={48} /></div><h3 className="text-2xl font-bold text-slate-700">資料載入失敗</h3><p className="text-lg text-slate-500">{error}</p><button onClick={() => fetchData()} className="px-6 py-3 bg-slate-200 rounded-lg text-slate-600 hover:bg-slate-300">重新嘗試</button></div>;
+
+            const currentYear = route.page === 'year' ? route.year : route.page === 'meeting' ? rocYear(route.id) : null;
+            const yearMeetings = currentYear ? meetings.filter(m => rocYear(m.id) === currentYear).sort((a, b) => a.id.localeCompare(b.id)) : [];
+            const tabCls = (on) => `pb-2.5 pt-1 text-sm md:text-base whitespace-nowrap border-b-2 transition-colors ${on ? 'border-[#6B859E] text-slate-800 font-bold' : 'border-transparent text-slate-400 font-medium hover:text-slate-600'}`;
+            const chipCls = (on) => `px-3 py-1 rounded-full text-sm whitespace-nowrap border transition-colors ${on ? 'bg-[#6B859E] text-white border-[#6B859E]' : 'bg-white text-slate-500 border-slate-200 hover:border-[#6B859E]/50'}`;
+
+            return (
+                <div className="min-h-screen flex flex-col">
+                    <nav className="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-20 no-print">
+                        <div className="max-w-[95%] mx-auto pt-3 md:pt-4 flex items-center justify-between gap-3">
+                            <a href="#/" className="flex items-center gap-2.5 md:gap-3 min-w-0">
+                                <div className="p-2 md:p-2.5 rounded-lg text-white flex-shrink-0" style={{ backgroundColor: COLORS.primary }}><Icons.LayoutDashboard size={22} /></div>
+                                <h1 className="text-lg md:text-2xl font-bold tracking-tight whitespace-nowrap truncate" style={{ color: COLORS.text }}>住院醫師座談會<span className="hidden sm:inline text-slate-400 font-normal text-sm md:text-base ml-2 md:ml-3">成效追蹤儀表板</span></h1>
+                            </a>
+                            <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
+                                <div className="hidden sm:flex items-center gap-1.5 text-xs font-medium text-slate-400 whitespace-nowrap">
+                                    {isRefreshing ? <Icons.RefreshCw size={12} className="animate-spin text-blue-400" /> : <div className="w-2 h-2 rounded-full bg-green-500"></div>}
+                                    {isRefreshing ? '同步中…' : `已同步 ${lastUpdated}`}
+                                </div>
+                                <button onClick={() => fetchData(true)} disabled={isRefreshing} className={`p-2 rounded-lg border border-slate-200 hover:bg-slate-50 ${isRefreshing ? 'bg-blue-50 cursor-wait' : 'bg-white'}`} title="重新讀取 Google Sheet"><Icons.RefreshCw size={16} className={isRefreshing ? 'animate-spin text-blue-500' : 'text-slate-500'} /></button>
+                            </div>
+                        </div>
+                        <div className="max-w-[95%] mx-auto mt-2 md:mt-3 overflow-x-auto custom-scrollbar">
+                            <div className="flex gap-4 md:gap-6 min-w-max items-end">
+                                <button onClick={() => go('#/')} className={tabCls(route.page === 'overview')}>總覽</button>
+                                <span className="pb-2.5 text-slate-300 text-xs hidden md:inline">│</span>
+                                {years.map(y => <button key={y} onClick={() => go(`#/year/${y}`)} className={tabCls(currentYear === y)}>{y} 年度</button>)}
+                                <span className="pb-2.5 text-slate-300 text-xs hidden md:inline">│</span>
+                                <button onClick={() => go('#/report')} className={`${tabCls(route.page === 'report')} flex items-center gap-1`}><Icons.Printer size={14} /> 評鑑報表</button>
+                            </div>
+                        </div>
+                        {currentYear && yearMeetings.length > 0 && (
+                            <div className="bg-slate-50 border-t border-slate-100">
+                                <div className="max-w-[95%] mx-auto py-2 overflow-x-auto custom-scrollbar flex gap-2 items-center">
+                                    <span className="text-xs text-slate-400 whitespace-nowrap mr-1">{currentYear} 年場次：</span>
+                                    {yearMeetings.map(m => <button key={m.id} onClick={() => go(`#/meeting/${m.id}`)} className={chipCls(route.page === 'meeting' && route.id === m.id)}>{toROC(m.id).slice(-5)}{m.id > todayKey() ? ' ·預定' : ''}</button>)}
+                                </div>
+                            </div>
+                        )}
+                    </nav>
+
+                    <main className="p-4 md:p-8 max-w-[95%] mx-auto flex-grow w-full">
+                        {route.page === 'overview' && <OverviewPage issues={issues} meetings={meetings} attendance={attendance} years={years} yearStats={yearStats} onSelect={setSelected} />}
+                        {route.page === 'year' && (years.includes(route.year)
+                            ? <YearPage year={route.year} issues={issues} meetings={meetings} attendance={attendance} years={years} onSelect={setSelected} />
+                            : <p className="text-center text-slate-400 py-20">找不到民國 {route.year} 年的資料</p>)}
+                        {route.page === 'meeting' && (knownIds.has(route.id)
+                            ? <MeetingPage meeting={meetings.find(m => m.id === route.id)} issues={issues} attendance={attendance} onSelect={setSelected} />
+                            : <p className="text-center text-slate-400 py-20">找不到場次 {route.id}</p>)}
+                        {route.page === 'report' && <ReportPage issues={issues} meetings={meetings} attendance={attendance} years={years} yearStats={yearStats} onSelect={setSelected} />}
+                    </main>
+
+                    <footer className="text-center text-xs text-slate-400 py-6 no-print">資料來源：Google Sheet「住院醫師座談會成效追蹤」 · 教學部住院醫師組</footer>
+                    {selected && <IssueDrawer issue={selected} meetings={meetings} onClose={() => setSelected(null)} />}
+                </div>
+            );
+        };
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
 </body>
 </html>
