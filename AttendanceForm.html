@@ -82,10 +82,10 @@
         <div class="p-8 sm:p-10 border-b border-morandi-border">
             <div class="prose prose-slate max-w-none text-morandi-text">
                 <p class="mb-4 leading-relaxed">
-                    <span class="font-medium text-morandi-primary">各位內科部的夥伴們，大家好：</span>
+                    <span class="font-medium text-morandi-primary">各位復健部、解剖病理科、家庭醫學部、耳鼻喉部的夥伴們，大家好：</span>
                 </p>
                 <p class="mb-6 text-sm sm:text-base leading-relaxed text-justify">
-                    平時忙於臨床與學習，辛苦了！為了更貼近大家的訓練需求，並持續優化教學與工作環境，教學部特別舉辦本次「住院醫師座談餐會」。這是一場輕鬆的午餐約會，本次由<strong>陳鋭溢醫師</strong>主持，並邀請<strong>陳志成副院長、湯宏仁副院長</strong>蒞臨指導，希望能直接聽聽大家在臨床現場的真實想法，與我們共同建立更好的學習生態。
+                    平時忙於臨床與學習，辛苦了！為了更貼近大家的訓練需求，並持續優化教學與工作環境，教學部特別舉辦本次「住院醫師座談餐會」。這是一場輕鬆的午餐約會，本次由<strong>郭進榮主任</strong>主持，並邀請<strong>王哲川副院長、鄭天浚副院長</strong>蒞臨指導，希望能直接聽聽大家在臨床現場的真實想法，與我們共同建立更好的學習生態。
                 </p>
                 
                 <div class="bg-[#F0F4F5] border-l-4 border-morandi-primary p-4 rounded-r-lg my-6">
@@ -105,7 +105,7 @@
                         </div>
                         <div>
                             <span class="block text-xs text-gray-400">時間</span>
-                            <span class="font-medium">115年 07月 14日 (二) 12:30</span>
+                            <span class="font-medium">115年 10月 20日 (二) 12:30</span>
                             <span class="block text-xs text-gray-400 mt-0.5">（12:00 始提供餐食）</span>
                         </div>
                     </div>
@@ -124,7 +124,7 @@
                         </div>
                         <div>
                             <span class="block text-xs text-gray-400">截止日期</span>
-                            <span class="font-medium text-red-400">請於 7/8 (三) 前完成回覆</span>
+                            <span class="font-medium text-red-400">請於 10/14 (三) 前完成回覆</span>
                         </div>
                     </div>
                      <div class="flex items-center space-x-3 text-sm cursor-pointer hover:opacity-80 transition-opacity" onclick="addToCalendar()">
@@ -145,11 +145,21 @@
                         <i class="fas fa-chevron-down text-xs group-open:rotate-180 transition-transform"></i>
                     </summary>
                     <div class="px-4 pb-4 text-sm text-gray-600 space-y-1.5">
-                        <p><span class="text-gray-400 inline-block w-20">主席</span>陳鋭溢 醫師</p>
-                        <p><span class="text-gray-400 inline-block w-20">指導長官</span>陳志成 副院長、湯宏仁 副院長</p>
-                        <p><span class="text-gray-400 inline-block w-20">教學主管</span>蘇慧真 部長、劉雯 副部長</p>
-                        <p><span class="text-gray-400 inline-block w-20">列席主管</span>杜漢祥 部長</p>
+                        <p><span class="text-gray-400 inline-block w-24 align-top">主席</span>郭進榮 主任</p>
+                        <p><span class="text-gray-400 inline-block w-24 align-top">指導長官</span>王哲川 副院長、鄭天浚 副院長</p>
+                        <p><span class="text-gray-400 inline-block w-24 align-top">教學主管</span>蘇慧真 部長、劉雯 副部長</p>
+                        <p><span class="text-gray-400 inline-block w-24 align-top">列席主管</span>杜漢祥 部長</p>
+                        <p class="flex"><span class="text-gray-400 inline-block w-24 shrink-0">教學負責人</span><span>蕭珮琦 部長、黃駿豐 副部長、陳力瑀 醫師、廖以莊 醫師</span></p>
                     </div>
+                </details>
+
+                <!-- 出席名單 -->
+                <details class="mt-3 bg-gray-50 rounded-lg border border-gray-200 group">
+                    <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-gray-700 hover:text-morandi-primary flex items-center justify-between">
+                        <span><i class="fas fa-users mr-2 text-morandi-primary"></i>本場次邀請名單（共 26 位）</span>
+                        <i class="fas fa-chevron-down text-xs group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <div class="px-4 pb-4 text-sm text-gray-600" id="rosterDisplay"></div>
                 </details>
             </div>
         </div>
@@ -166,33 +176,34 @@
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pl-0 md:pl-11">
                     <div class="group">
-                        <label for="name" class="block text-sm font-medium text-gray-600 mb-2 group-hover:text-morandi-primary transition-colors">您的姓名 <span class="text-red-400">*</span></label>
-                        <input type="text" id="name" name="name" required
-                            class="w-full px-4 py-3 bg-morandi-inputBg border border-gray-200 rounded-lg focus:outline-none focus:border-morandi-primary focus:ring-1 focus:ring-morandi-primary transition-all placeholder-gray-300"
-                            placeholder="請輸入全名">
-                    </div>
-
-                    <div class="group">
                         <label for="department" class="block text-sm font-medium text-gray-600 mb-2 group-hover:text-morandi-primary transition-colors">您的科別 <span class="text-red-400">*</span></label>
                         <div class="relative">
-                            <select id="department" name="department" required
+                            <select id="department" name="department" required onchange="populateNames()"
                                 class="w-full px-4 py-3 bg-morandi-inputBg border border-gray-200 rounded-lg appearance-none focus:outline-none focus:border-morandi-primary focus:ring-1 focus:ring-morandi-primary transition-all cursor-pointer">
                                 <option value="" disabled selected>請選擇您所屬的科別</option>
-                                <option value="內科部">內科部</option>
-                                <option value="心臟血管內科">心臟血管內科</option>
-                                <option value="血液腫瘤科">血液腫瘤科</option>
-                                <option value="胃腸肝膽科">胃腸肝膽科</option>
-                                <option value="風濕免疫科">風濕免疫科</option>
-                                <option value="神經內科">神經內科</option>
-                                <option value="內分泌新陳代謝科">內分泌新陳代謝科</option>
-                                <option value="胸腔內科">胸腔內科</option>
-                                <option value="腎臟科">腎臟科</option>
-                                <option value="感染科">感染科</option>
+                                <option value="復健部">復健部</option>
+                                <option value="解剖病理科">解剖病理科</option>
+                                <option value="家庭醫學部">家庭醫學部</option>
+                                <option value="耳鼻喉部">耳鼻喉部</option>
                             </select>
                             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
                                 <i class="fas fa-chevron-down text-xs"></i>
                             </div>
                         </div>
+                    </div>
+
+                    <div class="group">
+                        <label for="name" class="block text-sm font-medium text-gray-600 mb-2 group-hover:text-morandi-primary transition-colors">您的姓名 <span class="text-red-400">*</span></label>
+                        <div class="relative">
+                            <select id="name" name="name" required
+                                class="w-full px-4 py-3 bg-morandi-inputBg border border-gray-200 rounded-lg appearance-none focus:outline-none focus:border-morandi-primary focus:ring-1 focus:ring-morandi-primary transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
+                                <option value="" disabled selected>請先選擇科別</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+                                <i class="fas fa-chevron-down text-xs"></i>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-1.5">未在名單中請逕洽教學部（分機 57438）</p>
                     </div>
                 </div>
             </section>
@@ -208,7 +219,7 @@
 
                 <div class="space-y-6 pl-0 md:pl-11">
                     <div>
-                        <label class="block text-sm font-medium text-gray-600 mb-3">請問您是否出席 7/14 座談餐會？ <span class="text-red-400">*</span></label>
+                        <label class="block text-sm font-medium text-gray-600 mb-3">請問您是否出席 10/20 座談餐會？ <span class="text-red-400">*</span></label>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <label class="relative flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors input-focus-ring">
                                 <input type="radio" name="attendance" value="yes" class="h-4 w-4 text-morandi-primary border-gray-300 focus:ring-morandi-primary" required onclick="toggleSections(true)">
@@ -365,7 +376,86 @@
 
     <script>
         // *** 重要：請填入您部署 Apps Script 獲得的 URL ***
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxkl4fmKXvbmCRQhBTACZMkHxvftqeU1rKKChI6uomivRb4o0Zh2sw6JYnIni_J-Wtl/exec'; 
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxkl4fmKXvbmCRQhBTACZMkHxvftqeU1rKKChI6uomivRb4o0Zh2sw6JYnIni_J-Wtl/exec';
+
+        // 115/10/20 場次邀請名單（依邀請函出席名單）
+        const ROSTER = {
+            '復健部': [
+                { name: '林姿廷', id: 'B20822', level: 'CR/LR4' },
+                { name: '李郡賢', id: 'B10850', level: 'LR3' },
+                { name: '何承蔚', id: 'B20824', level: 'LR2' },
+                { name: '林磊奇', id: 'B50804', level: 'LR1' }
+            ],
+            '解剖病理科': [
+                { name: '張簡于聖', id: 'B308M8', level: 'LR3' },
+                { name: '徐乙寧', id: 'B40807', level: 'LR2' }
+            ],
+            '家庭醫學部': [
+                { name: '番馨儀', id: 'B00849', level: '研究員R4' },
+                { name: '謝晟宣', id: 'B008J2', level: 'R4' },
+                { name: '陳欣妤', id: 'B008J8', level: '研究員R4' },
+                { name: '黃靖懿', id: 'B10849', level: 'CR/LR3' },
+                { name: '郭冠辰', id: 'B308K4', level: 'CR/LR3' },
+                { name: '陳柏智', id: 'B308K5', level: 'CR/LR3' },
+                { name: '吳哲嘉', id: 'B31008', level: 'LR2' },
+                { name: '王俊智', id: 'B20826', level: 'LR2' },
+                { name: '許富竣', id: 'B20839', level: 'LR2' },
+                { name: '唐翊智', id: 'B208H4', level: 'LR2' },
+                { name: '林宜蓁', id: 'B40810', level: 'LR2' },
+                { name: '黃湘涵', id: 'B30607', level: 'LR1' },
+                { name: '黃迎真', id: 'B30847', level: 'LR1' },
+                { name: '番懷槿', id: 'B308J2', level: 'LR1' },
+                { name: '袁葇', id: 'B50805', level: 'LR1' }
+            ],
+            '耳鼻喉部': [
+                { name: '曾馨儀', id: 'A90836', level: 'CR/LR5' },
+                { name: '郭冠吾', id: 'B008M8', level: 'LR4' },
+                { name: '葉秋志', id: 'B308K9', level: 'LR3' },
+                { name: '蔡宜軒', id: 'B208H6', level: 'LR2' },
+                { name: '陳韋廷', id: 'B308H2', level: 'LR1' }
+            ]
+        };
+
+        function populateNames() {
+            const dept = document.getElementById('department').value;
+            const nameSelect = document.getElementById('name');
+            nameSelect.innerHTML = '';
+
+            if (!dept || !ROSTER[dept]) {
+                nameSelect.innerHTML = '<option value="" disabled selected>請先選擇科別</option>';
+                return;
+            }
+
+            const placeholder = document.createElement('option');
+            placeholder.value = '';
+            placeholder.disabled = true;
+            placeholder.selected = true;
+            placeholder.textContent = '請選擇您的姓名';
+            nameSelect.appendChild(placeholder);
+
+            ROSTER[dept].forEach(person => {
+                const opt = document.createElement('option');
+                opt.value = person.name;
+                opt.textContent = `${person.name}（${person.level}）`;
+                nameSelect.appendChild(opt);
+            });
+        }
+
+        function renderRoster() {
+            const container = document.getElementById('rosterDisplay');
+            if (!container) return;
+            let html = '';
+            Object.keys(ROSTER).forEach(dept => {
+                html += `<div class="mb-3 last:mb-0">
+                    <p class="text-xs font-medium text-morandi-primary mb-1.5">${dept}（${ROSTER[dept].length} 位）</p>
+                    <div class="flex flex-wrap gap-1.5">`;
+                ROSTER[dept].forEach(p => {
+                    html += `<span class="inline-block bg-white border border-gray-200 rounded px-2 py-1 text-xs text-gray-600">${p.name}<span class="text-gray-400 ml-1">${p.level}</span></span>`;
+                });
+                html += '</div></div>';
+            });
+            container.innerHTML = html;
+        }
 
         function toggleSections(isAttending) {
             const dietSection = document.getElementById('dietSection');
@@ -525,23 +615,26 @@
             setTimeout(() => {
                 modal.classList.add('hidden');
                 document.getElementById('registrationForm').reset();
+                populateNames();
                 toggleSections(false);
             }, 300);
         }
 
         function addToCalendar() {
             const eventDetails = {
-                title: '115年度住院醫師座談餐會 (內科部)',
-                start: '20260714T123000',
-                end: '20260714T140000',
+                title: '115年度住院醫師座談餐會 (復健部、解剖病理科、家庭醫學部、耳鼻喉部)',
+                start: '20261020T123000',
+                end: '20261020T140000',
                 location: '白宮VIP貴賓室',
-                details: '午餐交流｜聽見您的聲音。\\n12:00 始提供餐食，12:30 正式開始。\\n主席：陳鋭溢醫師；指導長官：陳志成副院長、湯宏仁副院長。'
+                details: '午餐交流｜聽見您的聲音。\\n12:00 始提供餐食，12:30 正式開始。\\n主席：郭進榮主任；指導長官：王哲川副院長、鄭天浚副院長。'
             };
             const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(eventDetails.title)}&dates=${eventDetails.start}/${eventDetails.end}&details=${encodeURIComponent(eventDetails.details)}&location=${encodeURIComponent(eventDetails.location)}`;
             window.open(googleCalendarUrl, '_blank');
         }
         
         window.addEventListener('DOMContentLoaded', (event) => {
+             renderRoster();
+             populateNames();
              const yesRadio = document.querySelector('input[name="attendance"][value="yes"]');
              if (!yesRadio.checked) {
                  toggleSections(false);
