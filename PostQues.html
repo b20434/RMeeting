@@ -28,9 +28,8 @@
         const VERSION = 'v2-1151020';
 
         const DEPARTMENTS = ['內科部', '神經內科', '外科部', '神經外科', '骨科部', '泌尿外科', '整形外科', '婦產部', '兒科部',
-            '急診醫學部', '家庭醫學部', '麻醉部', '放射診斷科', '放射腫瘤部', '解剖病理部', '臨床病理科', '核子醫學科',
-            '復健部', '精神醫學部', '耳鼻喉部', '眼科部', '皮膚科', '一般科（PGY）'];
-        const RANKS = ['PGY1', 'PGY2', 'R1', 'R2', 'R3', 'R4', 'R5', 'R6以上', 'CR', '研究員'];
+            '急診醫學部', '家庭醫學部', '麻醉部', '放射診斷科', '放射腫瘤部', '解剖病理部', '復健部', '精神醫學部', '耳鼻喉部', '眼科部'];
+        const RANKS = ['R1', 'R2', 'R3', 'R4', 'R5', 'R6以上', 'CR', '研究員'];
         const TIMING = ['會議結束後填寫', '臨床業務需提前離席'];
 
         // key = Google Sheet 欄位名稱。一、的 5 題文字沿用 114/12 起的後測原題，可接續比較。
@@ -264,8 +263,9 @@
 
                             <SectionCard title="三、建議（選填）" icon="msg" color="text-[#A69C8E]">
                                 <div className="space-y-3">
-                                    <label htmlFor="suggestion" className="block text-base md:text-lg font-medium text-[#5E6160]">11. 您最希望院方優先改善的一件事是什麼？</label>
-                                    <textarea id="suggestion" value={suggestion} onChange={e => setSuggestion(e.target.value)} placeholder="例如：排班制度、臨床教學時間、資訊系統…"
+                                    <label htmlFor="suggestion" className="block text-base md:text-lg font-medium text-[#5E6160]">11. 在本次會議提出的議題中，您最希望院方優先改善的是哪一項？</label>
+                                    <p className="text-sm text-[#9CA3AF] leading-relaxed -mt-1">請從本次會議中已提出的議題選擇。有其他問題，建議盡量在會議中直接提出，讓長官當場知悉。</p>
+                                    <textarea id="suggestion" value={suggestion} onChange={e => setSuggestion(e.target.value)} placeholder="例如：提案二 報告系統錯字檢查"
                                         className="w-full min-h-[110px] p-4 rounded-xl bg-[#FAFAF9] border border-[#DCD9D1] focus:border-[#7B8D8E] outline-none text-[#5E6160] resize-y" />
                                 </div>
                             </SectionCard>
